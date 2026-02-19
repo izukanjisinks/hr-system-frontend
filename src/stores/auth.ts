@@ -1,7 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authApi } from '@/services/api/auth'
-import type { AuthUser, LoginCredentials, ApiError } from '@/types/auth'
+import type { AuthUser, AuthRole, LoginCredentials, ApiError, UserRole } from '@/types/auth'
+
+function extractRole(role: UserRole | AuthRole | undefined): UserRole | null {
+  if (!role) return null
+  if (typeof role === 'string') return role
+  return role.name
+}
 
 const TOKEN_KEY = 'hr_token'
 
@@ -12,7 +18,8 @@ export const useAuthStore = defineStore('auth', () => {
   const error = ref<string | null>(null)
 
   const isAuthenticated = computed(() => !!token.value && !!user.value)
-  const userRole = computed(() => user.value?.role ?? null)
+  const userRole = computed(() => extractRole(user.value?.role))
+  const roleLabel = computed(() => userRole.value?.replace(/_/g, ' ') ?? '')
 
   function setToken(newToken: string) {
     token.value = newToken
@@ -70,6 +77,7 @@ export const useAuthStore = defineStore('auth', () => {
     error,
     isAuthenticated,
     userRole,
+    roleLabel,
     login,
     logout,
     fetchCurrentUser,

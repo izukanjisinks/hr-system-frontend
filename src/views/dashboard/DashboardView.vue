@@ -1,35 +1,44 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth'
-import { useRouter } from 'vue-router'
-import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card'
+import { Users, CalendarDays, DollarSign, UserSearch } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
-const router = useRouter()
 
-async function handleLogout() {
-  await authStore.logout()
-  router.push({ name: 'login' })
-}
+const stats = [
+  { title: 'Total Employees', value: '—', description: 'Active headcount', icon: Users },
+  { title: 'Leave Requests', value: '—', description: 'Pending approval', icon: CalendarDays },
+  { title: 'Payroll', value: '—', description: 'Last processed period', icon: DollarSign },
+  { title: 'Open Positions', value: '—', description: 'Active job postings', icon: UserSearch },
+]
 </script>
 
 <template>
-  <div class="min-h-svh bg-background p-8">
-    <div class="mx-auto max-w-4xl">
-      <div class="flex items-center justify-between mb-8">
-        <div>
-          <h1 class="text-3xl font-bold text-foreground">Dashboard</h1>
-          <p class="text-muted-foreground mt-1">
-            Welcome back, {{ authStore.user?.email }}
-          </p>
-        </div>
-        <Button variant="outline" @click="handleLogout">Sign out</Button>
-      </div>
+  <div class="flex flex-col gap-6 p-6">
+    <div>
+      <h1 class="text-2xl font-semibold">Dashboard</h1>
+      <p class="text-muted-foreground">
+        Welcome back, {{ authStore.user?.email }}
+      </p>
+    </div>
 
-      <div class="rounded-lg border bg-card p-6 text-card-foreground">
-        <p class="text-sm text-muted-foreground">
-          Role: <span class="font-medium text-foreground">{{ authStore.user?.role }}</span>
-        </p>
-      </div>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <Card v-for="stat in stats" :key="stat.title">
+        <CardHeader class="flex flex-row items-center justify-between pb-2">
+          <CardTitle class="text-sm font-medium">{{ stat.title }}</CardTitle>
+          <component :is="stat.icon" class="size-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <p class="text-2xl font-bold">{{ stat.value }}</p>
+          <CardDescription>{{ stat.description }}</CardDescription>
+        </CardContent>
+      </Card>
     </div>
   </div>
 </template>

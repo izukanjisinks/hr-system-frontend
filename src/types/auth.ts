@@ -3,10 +3,15 @@ export interface LoginCredentials {
   password: string
 }
 
+export interface AuthRole {
+  id: string
+  name: UserRole
+}
+
 export interface AuthUser {
   id: string
   email: string
-  role: UserRole
+  role: UserRole | AuthRole
   employee_id: string | null
   created_at: string
 }

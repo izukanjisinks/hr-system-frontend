@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    // Public routes
+    // Public
     {
       path: '/login',
       name: 'login',
@@ -12,16 +12,74 @@ const router = createRouter({
       meta: { requiresAuth: false, guestOnly: true },
     },
 
-    // Protected routes
+    // Authenticated — all share the sidebar layout
     {
       path: '/',
-      redirect: '/dashboard',
-    },
-    {
-      path: '/dashboard',
-      name: 'dashboard',
-      component: () => import('@/views/dashboard/DashboardView.vue'),
+      component: () => import('@/layouts/AuthenticatedLayout.vue'),
       meta: { requiresAuth: true },
+      redirect: '/dashboard',
+      children: [
+        {
+          path: 'dashboard',
+          name: 'dashboard',
+          component: () => import('@/views/dashboard/DashboardView.vue'),
+        },
+        // People
+        {
+          path: 'employees',
+          name: 'employees',
+          component: () => import('@/views/employees/EmployeesView.vue'),
+        },
+        {
+          path: 'departments',
+          name: 'departments',
+          component: () => import('@/views/departments/DepartmentsView.vue'),
+        },
+        {
+          path: 'positions',
+          name: 'positions',
+          component: () => import('@/views/positions/PositionsView.vue'),
+        },
+        // Leave & Attendance
+        {
+          path: 'leave',
+          name: 'leave',
+          component: () => import('@/views/leave/LeaveView.vue'),
+        },
+        {
+          path: 'attendance',
+          name: 'attendance',
+          component: () => import('@/views/attendance/AttendanceView.vue'),
+        },
+        {
+          path: 'holidays',
+          name: 'holidays',
+          component: () => import('@/views/holidays/HolidaysView.vue'),
+        },
+        // Payroll
+        {
+          path: 'payroll',
+          name: 'payroll',
+          component: () => import('@/views/payroll/PayrollView.vue'),
+        },
+        {
+          path: 'payroll/payslips',
+          name: 'payslips',
+          component: () => import('@/views/payroll/PayslipsView.vue'),
+        },
+        // Recruitment
+        {
+          path: 'recruitment',
+          name: 'recruitment',
+          component: () => import('@/views/recruitment/RecruitmentView.vue'),
+        },
+        // Performance
+        {
+          path: 'performance',
+          name: 'performance',
+          component: () => import('@/views/performance/PerformanceView.vue'),
+        },
+      ],
     },
 
     // Catch-all
@@ -36,7 +94,6 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   const authStore = useAuthStore()
 
-  // If we have a token but no user loaded yet, try to fetch the current user
   if (authStore.token && !authStore.user) {
     await authStore.fetchCurrentUser()
   }
@@ -44,12 +101,10 @@ router.beforeEach(async (to) => {
   const requiresAuth = to.meta.requiresAuth !== false
   const guestOnly = to.meta.guestOnly === true
 
-  // Redirect unauthenticated users to login
   if (requiresAuth && !authStore.isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
-  // Redirect authenticated users away from guest-only pages (login)
   if (guestOnly && authStore.isAuthenticated) {
     return { name: 'dashboard' }
   }
