@@ -25,6 +25,7 @@ async function request<T>(
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
+    credentials: 'include',
   })
 
   if (!response.ok) {
