@@ -1,17 +1,22 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Node, Edge } from '@vue-flow/core'
+import { workflowApi } from '@/services/api/workflow'
+import type { BackendWorkflow, BackendWorkflowStep, BackendWorkflowTransition } from '@/types/workflow'
 
 export interface WorkflowState {
   id: string
   name: string
   stateType: 'initial' | 'middle' | 'final'
   displayOrder: number
+  stepId: string // Backend step ID
+  allowedRoles: string[]
 }
 
 export interface WorkflowTransition {
   name: string
-  assignedTo?: string
+  transitionId?: string // Backend transition ID
+  actionName?: string
 }
 
 export interface Workflow {
@@ -23,6 +28,7 @@ export interface Workflow {
   edges: Edge<WorkflowTransition>[]
   createdAt: string
   updatedAt: string
+  createdBy: string
 }
 
 export const useWorkflowStore = defineStore('workflow', () => {
@@ -39,7 +45,122 @@ export const useWorkflowStore = defineStore('workflow', () => {
   const workflowById = (id: string) =>
     workflows.value.find(w => w.id === id)
 
-  // Actions
+  // Helper: Convert backend data to Vue Flow format
+  function convertToVueFlow(
+    workflow: BackendWorkflow,
+    steps: BackendWorkflowStep[],
+    transitions: BackendWorkflowTransition[]
+  ): Workflow {
+    // Sort steps by order
+    const sortedSteps = [...steps].sort((a, b) => a.step_order - b.step_order)
+
+    // Create nodes from steps
+    const nodes: Node<WorkflowState>[] = sortedSteps.map((step, index) => {
+      let stateType: 'initial' | 'middle' | 'final' = 'middle'
+      if (step.initial) stateType = 'initial'
+      if (step.final) stateType = 'final'
+
+      return {
+        id: step.id,
+        type: 'state',
+        position: {
+          x: 100 + index * 200,
+          y: 150 + (step.final ? 50 : 0) - (step.initial ? 50 : 0)
+        },
+        data: {
+          id: step.id,
+          name: step.step_name,
+          stateType,
+          displayOrder: step.step_order,
+          stepId: step.id,
+          allowedRoles: step.allowed_roles,
+        },
+      }
+    })
+
+    // Create edges from transitions
+    const edges: Edge<WorkflowTransition>[] = transitions.map(transition => ({
+      id: transition.id,
+      source: transition.from_step_id,
+      target: transition.to_step_id,
+      type: 'default',
+      data: {
+        name: transition.action_name,
+        transitionId: transition.id,
+        actionName: transition.action_name,
+      },
+    }))
+
+    return {
+      id: workflow.id,
+      name: workflow.name,
+      description: workflow.description,
+      isActive: workflow.is_active,
+      nodes,
+      edges,
+      createdAt: workflow.created_at,
+      updatedAt: workflow.updated_at,
+      createdBy: workflow.created_by,
+    }
+  }
+
+  // Fetch all workflows from backend
+  async function fetchWorkflows() {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await workflowApi.getAllWorkflows()
+
+      // Fetch structure for each workflow
+      const workflowsWithStructure = await Promise.all(
+        response.workflows.map(async (w) => {
+          try {
+            const structure = await workflowApi.getWorkflowStructure(w.id)
+            return convertToVueFlow(structure.workflow, structure.steps, structure.transitions)
+          } catch (err) {
+            console.error(`Failed to load structure for workflow ${w.id}:`, err)
+            // Return workflow with empty structure if fetch fails
+            return convertToVueFlow(w, [], [])
+          }
+        })
+      )
+
+      workflows.value = workflowsWithStructure
+    } catch (err) {
+      console.error('Failed to load workflows:', err)
+      error.value = (err as any)?.error?.message || (err as Error)?.message || 'Failed to load workflows'
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Load a specific workflow with full structure
+  async function loadWorkflow(id: string) {
+    loading.value = true
+    error.value = null
+    try {
+      const structure = await workflowApi.getWorkflowStructure(id)
+      const workflow = convertToVueFlow(structure.workflow, structure.steps, structure.transitions)
+
+      // Update in workflows list
+      const index = workflows.value.findIndex(w => w.id === id)
+      if (index !== -1) {
+        workflows.value[index] = workflow
+      } else {
+        workflows.value.push(workflow)
+      }
+
+      // Set as current
+      currentWorkflow.value = JSON.parse(JSON.stringify(workflow))
+    } catch (err) {
+      console.error('Failed to load workflow:', err)
+      error.value = (err as any)?.error?.message || (err as Error)?.message || 'Failed to load workflow'
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Set current workflow
   function setCurrentWorkflow(id: string | null) {
     if (!id) {
       currentWorkflow.value = null
@@ -48,31 +169,34 @@ export const useWorkflowStore = defineStore('workflow', () => {
     const workflow = workflowById(id)
     if (workflow) {
       currentWorkflow.value = JSON.parse(JSON.stringify(workflow))
+    } else {
+      // Load from backend if not in cache
+      loadWorkflow(id)
     }
   }
 
-  function createWorkflow(name: string, description: string) {
-    const newWorkflow: Workflow = {
-      id: crypto.randomUUID(),
-      name,
-      description,
-      isActive: true,
-      nodes: [],
-      edges: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+  // Create new workflow
+  async function createWorkflow(name: string, description: string) {
+    loading.value = true
+    error.value = null
+    try {
+      const newWorkflow = await workflowApi.createWorkflow({ name, description })
+
+      // Convert to Vue Flow format (no steps/transitions yet)
+      const workflow = convertToVueFlow(newWorkflow, [], [])
+      workflows.value.push(workflow)
+
+      return newWorkflow.id
+    } catch (err) {
+      console.error('Failed to create workflow:', err)
+      error.value = (err as any)?.error?.message || (err as Error)?.message || 'Failed to create workflow'
+      throw err
+    } finally {
+      loading.value = false
     }
-    workflows.value.push(newWorkflow)
-    return newWorkflow.id
   }
 
-  function updateWorkflowMetadata(id: string, updates: Partial<Pick<Workflow, 'name' | 'description' | 'isActive'>>) {
-    const workflow = workflowById(id)
-    if (workflow) {
-      Object.assign(workflow, updates, { updatedAt: new Date().toISOString() })
-    }
-  }
-
+  // Delete workflow (not implemented in backend yet, keep local for now)
   function deleteWorkflow(id: string) {
     const index = workflows.value.findIndex(w => w.id === id)
     if (index !== -1) {
@@ -83,7 +207,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     }
   }
 
-  // Node operations
+  // Node operations (local until we implement backend sync)
   function addNode(node: Node<WorkflowState>) {
     if (!currentWorkflow.value) return
     currentWorkflow.value.nodes = [...currentWorkflow.value.nodes, node]
@@ -115,7 +239,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     )
   }
 
-  // Edge operations
+  // Edge operations (local until we implement backend sync)
   function addEdge(edge: Edge<WorkflowTransition>) {
     if (!currentWorkflow.value) return
     currentWorkflow.value.edges = [...currentWorkflow.value.edges, edge]
@@ -145,69 +269,6 @@ export const useWorkflowStore = defineStore('workflow', () => {
     }
   }
 
-  // Initialize with sample workflows for HR processes
-  function initializeSampleWorkflows() {
-    if (workflows.value.length > 0) return
-
-    // Leave Approval Workflow
-    const leaveWorkflow: Workflow = {
-      id: 'leave-approval',
-      name: 'Leave Approval Process',
-      description: 'Standard workflow for employee leave requests',
-      isActive: true,
-      nodes: [
-        {
-          id: 'submitted',
-          type: 'state',
-          position: { x: 100, y: 150 },
-          data: { id: 'submitted', name: 'Submitted', stateType: 'initial', displayOrder: 1 },
-        },
-        {
-          id: 'pending-manager',
-          type: 'state',
-          position: { x: 300, y: 150 },
-          data: { id: 'pending-manager', name: 'Pending Manager Review', stateType: 'middle', displayOrder: 2 },
-        },
-        {
-          id: 'approved',
-          type: 'state',
-          position: { x: 500, y: 100 },
-          data: { id: 'approved', name: 'Approved', stateType: 'final', displayOrder: 3 },
-        },
-        {
-          id: 'rejected',
-          type: 'state',
-          position: { x: 500, y: 200 },
-          data: { id: 'rejected', name: 'Rejected', stateType: 'final', displayOrder: 4 },
-        },
-      ],
-      edges: [
-        {
-          id: 'e1',
-          source: 'submitted',
-          target: 'pending-manager',
-          data: { name: 'Submit to Manager' },
-        },
-        {
-          id: 'e2',
-          source: 'pending-manager',
-          target: 'approved',
-          data: { name: 'Approve' },
-        },
-        {
-          id: 'e3',
-          source: 'pending-manager',
-          target: 'rejected',
-          data: { name: 'Reject' },
-        },
-      ],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
-    workflows.value.push(leaveWorkflow)
-  }
-
   return {
     // State
     workflows,
@@ -220,9 +281,10 @@ export const useWorkflowStore = defineStore('workflow', () => {
     workflowById,
 
     // Actions
+    fetchWorkflows,
+    loadWorkflow,
     setCurrentWorkflow,
     createWorkflow,
-    updateWorkflowMetadata,
     deleteWorkflow,
     addNode,
     updateNodePosition,
@@ -232,6 +294,5 @@ export const useWorkflowStore = defineStore('workflow', () => {
     updateEdgeData,
     removeEdge,
     saveCurrentWorkflow,
-    initializeSampleWorkflows,
   }
 })

@@ -51,29 +51,35 @@ const formatDate = (dateString: string) => {
   })
 }
 
-function handleCreate() {
+async function handleCreate() {
   if (!formData.value.name.trim()) return
 
-  const id = workflowStore.createWorkflow(
-    formData.value.name.trim(),
-    formData.value.description.trim()
-  )
+  try {
+    const id = await workflowStore.createWorkflow(
+      formData.value.name.trim(),
+      formData.value.description.trim()
+    )
 
-  // Reset form
-  formData.value = { name: '', description: '' }
-  dialogOpen.value = false
+    // Reset form
+    formData.value = { name: '', description: '' }
+    dialogOpen.value = false
 
-  // Navigate to the new workflow
-  router.push(`/workflows/${id}`)
+    // Navigate to the new workflow
+    router.push(`/workflows/${id}`)
+  } catch (err) {
+    console.error('Failed to create workflow:', err)
+  }
 }
 
 function handleToggleActive(id: string, isActive: boolean) {
-  workflowStore.updateWorkflowMetadata(id, { isActive })
+  // TODO: Implement backend API call to update workflow status
+  console.log('Toggle active not yet implemented on backend')
 }
 
 function handleDelete(id: string, name: string) {
   if (confirm(`Delete workflow "${name}"?`)) {
     workflowStore.deleteWorkflow(id)
+    // TODO: Implement backend API call to delete workflow
   }
 }
 
@@ -82,7 +88,7 @@ function viewWorkflow(id: string) {
 }
 
 onMounted(() => {
-  workflowStore.initializeSampleWorkflows()
+  workflowStore.fetchWorkflows()
 })
 </script>
 
