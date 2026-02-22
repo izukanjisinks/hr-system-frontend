@@ -79,6 +79,17 @@ const router = createRouter({
           name: 'performance',
           component: () => import('@/views/performance/PerformanceView.vue'),
         },
+        // Workflows
+        {
+          path: 'workflows',
+          name: 'workflows',
+          component: () => import('@/views/workflows/WorkflowsView.vue'),
+        },
+        {
+          path: 'workflows/:id',
+          name: 'workflow-detail',
+          component: () => import('@/views/workflows/WorkflowDetailView.vue'),
+        },
       ],
     },
 

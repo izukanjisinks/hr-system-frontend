@@ -11,6 +11,7 @@ import {
   FileText,
   UserSearch,
   TrendingUp,
+  GitBranch,
   LogOut,
   ChevronUp,
   User2,
@@ -80,6 +81,12 @@ const navGroups = [
     label: 'Performance',
     items: [
       { title: 'Performance', icon: TrendingUp, routeName: 'performance' },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { title: 'Workflows', icon: GitBranch, routeName: 'workflows' },
     ],
   },
 ]
