@@ -13,6 +13,7 @@ import {
   TrendingUp,
   GitBranch,
   CheckSquare,
+  ShieldCheck,
   LogOut,
   ChevronUp,
   User2,
@@ -61,6 +62,7 @@ const navGroups = [
     label: 'Leave & Attendance',
     items: [
       { title: 'Leave Requests', icon: CalendarDays, routeName: 'leave' },
+      { title: 'Leave Approvals', icon: CheckSquare, routeName: 'approvals' },
       { title: 'Attendance', icon: ClockAlert, routeName: 'attendance' },
       { title: 'Holidays', icon: CalendarOff, routeName: 'holidays' },
     ],
@@ -88,7 +90,7 @@ const navGroups = [
     label: 'System',
     items: [
       { title: 'Workflows', icon: GitBranch, routeName: 'workflows' },
-      { title: 'Approvals', icon: CheckSquare, routeName: 'approvals' },
+      { title: 'Password Policy', icon: ShieldCheck, routeName: 'password-policy' },
     ],
   },
 ]
