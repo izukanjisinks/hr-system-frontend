@@ -88,7 +88,7 @@ async function handleSave(data: Partial<WorkflowTransition>) {
   <g>
     <BaseEdge
       :id="id"
-      :path="path[0]"
+      :path="path"
       :marker-end="markerEnd"
       class="stroke-2 stroke-gray-400"
     />
