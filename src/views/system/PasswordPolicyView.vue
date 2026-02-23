@@ -5,13 +5,21 @@ import type { PasswordPolicy } from '@/types/password'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import ResultDialog from '@/components/common/ResultDialog.vue'
 import { ShieldCheck, Loader2, Save, AlertCircle } from 'lucide-vue-next'
 
 const policy = ref<PasswordPolicy | null>(null)
 const loading = ref(false)
 const saving = ref(false)
 const error = ref<string | null>(null)
-const successMessage = ref<string | null>(null)
+
+// Result dialog state
+const resultDialog = ref({
+  open: false,
+  type: 'success' as 'success' | 'error',
+  title: '',
+  message: '',
+})
 
 // Form data
 const formData = ref({
@@ -33,15 +41,46 @@ async function loadPolicy() {
   error.value = null
   try {
     const data = await passwordApi.getPasswordPolicy()
+
+    // Log the raw response
+    console.log('=== RAW API RESPONSE ===')
+    console.log('Full response:', data)
+    console.log('Type checks:', {
+      require_uppercase: {
+        value: data.require_uppercase,
+        type: typeof data.require_uppercase,
+        isBoolean: typeof data.require_uppercase === 'boolean',
+        converted: Boolean(data.require_uppercase)
+      },
+      require_lowercase: {
+        value: data.require_lowercase,
+        type: typeof data.require_lowercase,
+        isBoolean: typeof data.require_lowercase === 'boolean',
+        converted: Boolean(data.require_lowercase)
+      },
+      require_numbers: {
+        value: data.require_numbers,
+        type: typeof data.require_numbers,
+        isBoolean: typeof data.require_numbers === 'boolean',
+        converted: Boolean(data.require_numbers)
+      },
+      require_special_chars: {
+        value: data.require_special_chars,
+        type: typeof data.require_special_chars,
+        isBoolean: typeof data.require_special_chars === 'boolean',
+        converted: Boolean(data.require_special_chars)
+      }
+    })
+
     policy.value = data
 
-    // Populate form with current policy
+    // Populate form with current policy - ensure booleans are actual booleans
     formData.value = {
       min_length: data.min_length,
-      require_uppercase: data.require_uppercase,
-      require_lowercase: data.require_lowercase,
-      require_numbers: data.require_numbers,
-      require_special_chars: data.require_special_chars,
+      require_uppercase: Boolean(data.require_uppercase),
+      require_lowercase: Boolean(data.require_lowercase),
+      require_numbers: Boolean(data.require_numbers),
+      require_special_chars: Boolean(data.require_special_chars),
       max_failed_attempts: data.max_failed_attempts,
       lockout_duration_mins: data.lockout_duration_mins,
       password_expiry_days: data.password_expiry_days,
@@ -49,6 +88,15 @@ async function loadPolicy() {
       otp_expiry_mins: data.otp_expiry_mins,
       session_timeout_mins: data.session_timeout_mins,
     }
+
+    console.log('=== FORM DATA AFTER ASSIGNMENT ===')
+    console.log('formData.value:', formData.value)
+    console.log('Boolean checks:', {
+      require_uppercase: formData.value.require_uppercase,
+      require_lowercase: formData.value.require_lowercase,
+      require_numbers: formData.value.require_numbers,
+      require_special_chars: formData.value.require_special_chars
+    })
   } catch (err) {
     console.error('Failed to load password policy:', err)
     error.value = 'Failed to load password policy'
@@ -60,20 +108,43 @@ async function loadPolicy() {
 async function handleSave() {
   saving.value = true
   error.value = null
-  successMessage.value = null
 
   try {
     const updatedPolicy = await passwordApi.updatePasswordPolicy(formData.value)
     policy.value = updatedPolicy
-    successMessage.value = 'Password policy updated successfully'
 
-    // Clear success message after 3 seconds
-    setTimeout(() => {
-      successMessage.value = null
-    }, 3000)
-  } catch (err) {
+    // Update form data to reflect the saved state from database - ensure booleans
+    formData.value = {
+      min_length: updatedPolicy.min_length,
+      require_uppercase: Boolean(updatedPolicy.require_uppercase),
+      require_lowercase: Boolean(updatedPolicy.require_lowercase),
+      require_numbers: Boolean(updatedPolicy.require_numbers),
+      require_special_chars: Boolean(updatedPolicy.require_special_chars),
+      max_failed_attempts: updatedPolicy.max_failed_attempts,
+      lockout_duration_mins: updatedPolicy.lockout_duration_mins,
+      password_expiry_days: updatedPolicy.password_expiry_days,
+      otp_length: updatedPolicy.otp_length,
+      otp_expiry_mins: updatedPolicy.otp_expiry_mins,
+      session_timeout_mins: updatedPolicy.session_timeout_mins,
+    }
+
+    // Show success dialog
+    resultDialog.value = {
+      open: true,
+      type: 'success',
+      title: 'Password Policy Updated',
+      message: 'The password policy has been updated successfully. All new password validations will use these settings.',
+    }
+  } catch (err: any) {
     console.error('Failed to update password policy:', err)
-    error.value = 'Failed to update password policy. You may not have permission to perform this action.'
+
+    // Show error dialog
+    resultDialog.value = {
+      open: true,
+      type: 'error',
+      title: 'Failed to Update Password Policy',
+      message: err?.response?.data?.message || 'Failed to update password policy. You may not have permission to perform this action.',
+    }
   } finally {
     saving.value = false
   }
@@ -99,15 +170,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Success Message -->
-    <div v-if="successMessage" class="rounded-lg border border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950 p-4">
-      <p class="text-sm text-green-900 dark:text-green-100 flex items-center gap-2">
-        <ShieldCheck class="w-4 h-4" />
-        {{ successMessage }}
-      </p>
-    </div>
-
-    <!-- Error Message -->
+    <!-- Error Message (for loading errors) -->
     <div v-if="error" class="rounded-lg border border-destructive bg-destructive/10 p-4">
       <p class="text-sm text-destructive flex items-center gap-2">
         <AlertCircle class="w-4 h-4" />
@@ -121,7 +184,7 @@ onMounted(() => {
     </div>
 
     <!-- Policy Settings -->
-    <div v-else-if="policy" class="grid gap-6">
+    <div v-else-if="policy" :key="policy.id" class="grid gap-6">
       <!-- Password Complexity -->
       <div class="rounded-lg border bg-card p-6 space-y-6">
         <div>
@@ -157,7 +220,10 @@ onMounted(() => {
                 <Label>Require Uppercase Letters</Label>
                 <p class="text-xs text-muted-foreground">At least one uppercase letter (A-Z)</p>
               </div>
-              <Switch v-model:checked="formData.require_uppercase" />
+              <Switch
+                :key="`uppercase-${policy.id}-${formData.require_uppercase}`"
+                v-model:checked="formData.require_uppercase"
+              />
             </div>
 
             <div class="flex items-center justify-between">
@@ -165,7 +231,10 @@ onMounted(() => {
                 <Label>Require Lowercase Letters</Label>
                 <p class="text-xs text-muted-foreground">At least one lowercase letter (a-z)</p>
               </div>
-              <Switch v-model:checked="formData.require_lowercase" />
+              <Switch
+                :key="`lowercase-${policy.id}-${formData.require_lowercase}`"
+                v-model:checked="formData.require_lowercase"
+              />
             </div>
 
             <div class="flex items-center justify-between">
@@ -173,7 +242,10 @@ onMounted(() => {
                 <Label>Require Numbers</Label>
                 <p class="text-xs text-muted-foreground">At least one numeric digit (0-9)</p>
               </div>
-              <Switch v-model:checked="formData.require_numbers" />
+              <Switch
+                :key="`numbers-${policy.id}-${formData.require_numbers}`"
+                v-model:checked="formData.require_numbers"
+              />
             </div>
 
             <div class="flex items-center justify-between">
@@ -181,7 +253,10 @@ onMounted(() => {
                 <Label>Require Special Characters</Label>
                 <p class="text-xs text-muted-foreground">At least one special character (!@#$%^&*)</p>
               </div>
-              <Switch v-model:checked="formData.require_special_chars" />
+              <Switch
+                :key="`special-${policy.id}-${formData.require_special_chars}`"
+                v-model:checked="formData.require_special_chars"
+              />
             </div>
           </div>
         </div>
@@ -315,5 +390,14 @@ onMounted(() => {
         Last updated: {{ new Date(policy.updated_at).toLocaleString() }}
       </div>
     </div>
+
+    <!-- Result Dialog -->
+    <ResultDialog
+      :open="resultDialog.open"
+      :type="resultDialog.type"
+      :title="resultDialog.title"
+      :message="resultDialog.message"
+      @update:open="(val) => (resultDialog.open = val)"
+    />
   </div>
 </template>
