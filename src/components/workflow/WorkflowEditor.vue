@@ -43,8 +43,18 @@ watch(
 )
 
 // Handle new connections
-onConnect((connection: Connection) => {
+onConnect(async (connection: Connection) => {
   if (!connection.source || !connection.target) return
+
+  // Check if both nodes are saved (have backend IDs, not temporary node-* IDs)
+  const sourceIsNew = connection.source.startsWith('node-')
+  const targetIsNew = connection.target.startsWith('node-')
+
+  // Don't allow connections between unsaved nodes
+  if (sourceIsNew || targetIsNew) {
+    alert('Please save both steps before creating a transition between them.')
+    return
+  }
 
   const newEdge = {
     id: `e${Date.now()}`,
@@ -52,10 +62,32 @@ onConnect((connection: Connection) => {
     target: connection.target,
     type: 'default',
     markerEnd: MarkerType.ArrowClosed,
-    data: { name: 'Transition' },
+    data: {
+      name: 'New Transition',
+      actionName: 'approve',
+      conditionType: 'always',
+      conditionValue: '',
+    },
   }
 
   workflowStore.addEdge(newEdge)
+
+  // Auto-save transition to backend since both nodes are saved
+  if (workflowStore.currentWorkflow) {
+    try {
+      await workflowStore.createTransition(
+        workflowStore.currentWorkflow.id,
+        connection.source,
+        connection.target,
+        newEdge.data
+      )
+    } catch (err) {
+      console.error('Failed to create transition:', err)
+      // Remove the edge if creation failed
+      workflowStore.removeEdge(newEdge.id)
+      alert('Failed to create transition. Please try again.')
+    }
+  }
 })
 
 // Handle node drag
@@ -86,6 +118,10 @@ function onDrop(event: DragEvent) {
       name: `New ${stateType} State`,
       stateType,
       displayOrder: (workflowStore.currentWorkflow?.nodes.length || 0) + 1,
+      stepId: `node-${Date.now()}`,
+      allowedRoles: [],
+      requiresAllApprovers: false,
+      minApprovals: 1,
     },
   }
 

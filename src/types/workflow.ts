@@ -7,6 +7,8 @@ export interface BackendWorkflow {
   created_by: string
   created_at: string
   updated_at: string
+  step_count: number
+  transition_count: number
 }
 
 export interface BackendWorkflowStep {
@@ -51,6 +53,12 @@ export interface CreateWorkflowPayload {
   description: string
 }
 
+export interface UpdateWorkflowPayload {
+  name?: string
+  description?: string
+  is_active?: boolean
+}
+
 export interface CreateStepPayload {
   workflow_id: string
   step_name: string
@@ -62,6 +70,14 @@ export interface CreateStepPayload {
   min_approvals: number
 }
 
+export interface UpdateStepPayload {
+  step_name?: string
+  step_order?: number
+  allowed_roles?: string[]
+  requires_all_approvers?: boolean
+  min_approvals?: number
+}
+
 export interface CreateTransitionPayload {
   workflow_id: string
   from_step_id: string
@@ -69,4 +85,10 @@ export interface CreateTransitionPayload {
   action_name: string
   condition_type: string
   condition_value: string
+}
+
+export interface UpdateTransitionPayload {
+  action_name?: string
+  condition_type?: string
+  condition_value?: string
 }

@@ -4,10 +4,13 @@ import type {
   BackendWorkflow,
   WorkflowStructure,
   CreateWorkflowPayload,
+  UpdateWorkflowPayload,
   BackendWorkflowStep,
   CreateStepPayload,
+  UpdateStepPayload,
   BackendWorkflowTransition,
   CreateTransitionPayload,
+  UpdateTransitionPayload,
 } from '@/types/workflow'
 
 export const workflowApi = {
@@ -22,6 +25,18 @@ export const workflowApi = {
 
   createWorkflow(payload: CreateWorkflowPayload): Promise<BackendWorkflow> {
     return apiClient.post<BackendWorkflow>('/admin/workflows', payload)
+  },
+
+  updateWorkflow(id: string, payload: UpdateWorkflowPayload): Promise<BackendWorkflow> {
+    return apiClient.put<BackendWorkflow>(`/admin/workflows/${id}`, payload)
+  },
+
+  deactivateWorkflow(id: string): Promise<void> {
+    return apiClient.delete<void>(`/admin/workflows/${id}/deactivate`)
+  },
+
+  deleteWorkflow(id: string): Promise<void> {
+    return apiClient.delete<void>(`/admin/workflows/${id}`)
   },
 
   getWorkflowStructure(id: string): Promise<WorkflowStructure> {
@@ -41,6 +56,14 @@ export const workflowApi = {
     return apiClient.post<BackendWorkflowStep>('/admin/workflow-steps', payload)
   },
 
+  updateStep(stepId: string, payload: UpdateStepPayload): Promise<BackendWorkflowStep> {
+    return apiClient.put<BackendWorkflowStep>(`/admin/workflow-steps/${stepId}`, payload)
+  },
+
+  deleteStep(stepId: string): Promise<void> {
+    return apiClient.delete<void>(`/admin/workflow-steps/${stepId}`)
+  },
+
   // Transition Management
   getWorkflowTransitions(workflowId: string): Promise<BackendWorkflowTransition[]> {
     return apiClient.get<BackendWorkflowTransition[]>(`/admin/workflows/${workflowId}/transitions`)
@@ -52,5 +75,13 @@ export const workflowApi = {
 
   createTransition(payload: CreateTransitionPayload): Promise<BackendWorkflowTransition> {
     return apiClient.post<BackendWorkflowTransition>('/admin/workflow-transitions', payload)
+  },
+
+  updateTransition(transitionId: string, payload: UpdateTransitionPayload): Promise<BackendWorkflowTransition> {
+    return apiClient.put<BackendWorkflowTransition>(`/admin/workflow-transitions/${transitionId}`, payload)
+  },
+
+  deleteTransition(transitionId: string): Promise<void> {
+    return apiClient.delete<void>(`/admin/workflow-transitions/${transitionId}`)
   },
 }

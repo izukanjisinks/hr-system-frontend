@@ -23,20 +23,25 @@ const workflowId = computed(() => route.params.id as string)
 
 const workflow = computed(() => workflowStore.currentWorkflow)
 
+async function handleToggleActive(val: unknown) {
+  if (!workflow.value) return
+  await workflowStore.updateWorkflowStatus(workflow.value.id, val as boolean)
+}
+
 function handleSave() {
   workflowStore.saveCurrentWorkflow()
   router.push('/workflows')
 }
 
-function handleBack() {
+async function handleBack() {
   if (confirm('Discard unsaved changes?')) {
-    workflowStore.setCurrentWorkflow(null)
+    await workflowStore.setCurrentWorkflow(null)
     router.push('/workflows')
   }
 }
 
-onMounted(() => {
-  workflowStore.setCurrentWorkflow(workflowId.value)
+onMounted(async () => {
+  await workflowStore.setCurrentWorkflow(workflowId.value)
 })
 </script>
 
@@ -59,7 +64,7 @@ onMounted(() => {
           <span class="text-sm text-muted-foreground">Active:</span>
           <Switch
             :checked="workflow.isActive"
-            @update:checked="(val) => workflowStore.updateWorkflowMetadata(workflow.id, { isActive: val })"
+            @update:checked="handleToggleActive"
           />
         </div>
         <Button @click="handleSave">

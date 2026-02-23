@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@vue-flow/core'
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, Position } from '@vue-flow/core'
 import { useWorkflowStore } from '@/stores/workflow'
 import type { WorkflowTransition } from '@/stores/workflow'
+
+// @ts-ignore - Vue SFC component
+import TransitionEditDialog from './TransitionEditDialog.vue'
 
 const props = defineProps<{
   id: string
@@ -14,11 +17,12 @@ const props = defineProps<{
   targetPosition: any
   data: WorkflowTransition
   markerEnd?: string
+  sourceHandleId?: string
+  targetHandleId?: string
 }>()
 
 const workflowStore = useWorkflowStore()
-const isEditing = ref(false)
-const editedName = ref(props.data?.name || '')
+const showEditDialog = ref(false)
 
 const path = computed(() => {
   const [edgePath] = getBezierPath({
@@ -28,25 +32,55 @@ const path = computed(() => {
     targetX: props.targetX,
     targetY: props.targetY,
     targetPosition: props.targetPosition,
+    curvature: 0.25,
   })
   return edgePath
 })
 
-const labelPosition = computed(() => ({
-  x: (props.sourceX + props.targetX) / 2,
-  y: (props.sourceY + props.targetY) / 2,
-}))
+const labelPosition = computed(() => {
+  // Position label with slight offset to avoid overlap
+  const yDiff = props.targetY - props.sourceY
+  const baseY = (props.sourceY + props.targetY) / 2
+  const offsetY = yDiff > 0 ? 10 : -10
+
+  return {
+    x: (props.sourceX + props.targetX) / 2,
+    y: baseY + offsetY,
+  }
+})
 
 function handleEditClick() {
-  isEditing.value = true
-  editedName.value = props.data?.name || ''
+  showEditDialog.value = true
 }
 
-function saveEdit() {
-  if (editedName.value.trim()) {
-    workflowStore.updateEdgeData(props.id, { name: editedName.value.trim() })
+async function handleSave(data: Partial<WorkflowTransition>) {
+  // Update local state first
+  workflowStore.updateEdgeData(props.id, data)
+
+  // Determine if this is a new transition (temporary ID) or existing transition (UUID)
+  const isNewTransition = props.id.startsWith('e')
+
+  try {
+    if (isNewTransition && workflowStore.currentWorkflow) {
+      // Get the edge to find source and target
+      const edge = workflowStore.currentWorkflow.edges.find(e => e.id === props.id)
+      if (edge) {
+        // Create new transition in backend
+        await workflowStore.createTransition(
+          workflowStore.currentWorkflow.id,
+          edge.source,
+          edge.target,
+          data as WorkflowTransition
+        )
+      }
+    } else if (!isNewTransition) {
+      // Update existing transition in backend
+      await workflowStore.updateTransition(props.id, data)
+    }
+  } catch (err) {
+    console.error('Failed to save transition:', err)
+    alert('Failed to save transition. Please try again.')
   }
-  isEditing.value = false
 }
 </script>
 
@@ -67,30 +101,21 @@ function saveEdit() {
         }"
         class="nodrag nopan"
       >
-        <div v-if="isEditing" class="flex gap-1 bg-white dark:bg-gray-800 p-1 rounded shadow-lg border">
-          <input
-            v-model="editedName"
-            type="text"
-            class="px-2 py-1 text-xs border rounded"
-            @keyup.enter="saveEdit"
-            @keyup.escape="isEditing = false"
-            autofocus
-          />
-          <button
-            @click="saveEdit"
-            class="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Save
-          </button>
-        </div>
         <button
-          v-else
           @click="handleEditClick"
           class="px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded shadow-md hover:bg-gray-100 dark:hover:bg-gray-700 border font-medium"
         >
-          {{ data?.name || 'Click to edit' }}
+          {{ data?.actionName || data?.name || 'Click to edit' }}
         </button>
       </div>
     </EdgeLabelRenderer>
+
+    <!-- Edit Dialog -->
+    <TransitionEditDialog
+      :open="showEditDialog"
+      :transition-data="data"
+      @update:open="(val) => showEditDialog = val"
+      @save="handleSave"
+    />
   </g>
 </template>

@@ -5,6 +5,9 @@ import { useWorkflowStore } from '@/stores/workflow'
 import { Edit2, Trash2 } from 'lucide-vue-next'
 import type { WorkflowState } from '@/stores/workflow'
 
+// @ts-ignore - Vue SFC component
+import StepEditDialog from './StepEditDialog.vue'
+
 const props = defineProps<{
   id: string
   data: WorkflowState
@@ -12,8 +15,7 @@ const props = defineProps<{
 
 const workflowStore = useWorkflowStore()
 const isHovered = ref(false)
-const isEditing = ref(false)
-const editedName = ref(props.data.name)
+const showEditDialog = ref(false)
 
 const stateTypeColor = computed(() => {
   switch (props.data.stateType) {
@@ -29,15 +31,33 @@ const stateTypeColor = computed(() => {
 })
 
 function handleEdit() {
-  isEditing.value = true
-  editedName.value = props.data.name
+  showEditDialog.value = true
 }
 
-function saveEdit() {
-  if (editedName.value.trim()) {
-    workflowStore.updateNodeData(props.id, { name: editedName.value.trim() })
+async function handleSave(data: Partial<WorkflowState>) {
+  // Update local state first
+  workflowStore.updateNodeData(props.id, data)
+
+  // Determine if this is a new step (temporary ID) or existing step (UUID)
+  const isNewStep = props.id.startsWith('node-')
+
+  try {
+    if (isNewStep && workflowStore.currentWorkflow) {
+      // Create new step in backend
+      const stepData: WorkflowState = {
+        ...props.data,
+        ...data,
+      } as WorkflowState
+
+      await workflowStore.createStep(workflowStore.currentWorkflow.id, stepData)
+    } else if (!isNewStep) {
+      // Update existing step in backend
+      await workflowStore.updateStep(props.id, data)
+    }
+  } catch (err) {
+    console.error('Failed to save step:', err)
+    alert('Failed to save step. Please try again.')
   }
-  isEditing.value = false
 }
 
 function handleDelete() {
@@ -63,30 +83,27 @@ function handleDelete() {
 
     <!-- Content -->
     <div class="flex flex-col gap-1">
-      <div v-if="isEditing" class="flex gap-1">
-        <input
-          v-model="editedName"
-          type="text"
-          class="flex-1 px-2 py-1 text-sm border rounded"
-          @keyup.enter="saveEdit"
-          @keyup.escape="isEditing = false"
-          autofocus
-        />
-        <button
-          @click="saveEdit"
-          class="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          Save
-        </button>
-      </div>
-      <div v-else class="font-semibold text-sm">{{ data.name }}</div>
-
+      <div class="font-semibold text-sm">{{ data.name }}</div>
       <div class="text-xs text-muted-foreground capitalize">{{ data.stateType }}</div>
+
+      <!-- Show allowed roles if present -->
+      <div v-if="data.allowedRoles && data.allowedRoles.length > 0" class="text-xs text-muted-foreground mt-1 pt-1 border-t">
+        <div class="font-medium mb-0.5">Allowed Roles:</div>
+        <div class="flex flex-wrap gap-1">
+          <span
+            v-for="role in data.allowedRoles"
+            :key="role"
+            class="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-[10px]"
+          >
+            {{ role.replace(/_/g, ' ') }}
+          </span>
+        </div>
+      </div>
     </div>
 
     <!-- Action Buttons (show on hover) -->
     <div
-      v-if="isHovered && !isEditing"
+      v-if="isHovered"
       class="absolute -top-2 -right-2 flex gap-1"
     >
       <button
@@ -108,6 +125,14 @@ function handleDelete() {
       type="source"
       :position="Position.Right"
       class="!w-3 !h-3 !bg-gray-400 !border-2 !border-white"
+    />
+
+    <!-- Edit Dialog -->
+    <StepEditDialog
+      :open="showEditDialog"
+      :step-data="data"
+      @update:open="(val) => showEditDialog = val"
+      @save="handleSave"
     />
   </div>
 </template>

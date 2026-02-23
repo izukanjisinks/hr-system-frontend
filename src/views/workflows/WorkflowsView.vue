@@ -71,15 +71,21 @@ async function handleCreate() {
   }
 }
 
-function handleToggleActive(id: string, isActive: boolean) {
-  // TODO: Implement backend API call to update workflow status
-  console.log('Toggle active not yet implemented on backend')
+async function handleToggleActive(id: string, isActive: unknown) {
+  try {
+    await workflowStore.updateWorkflowStatus(id, isActive as boolean)
+  } catch (err) {
+    console.error('Failed to update workflow status:', err)
+  }
 }
 
-function handleDelete(id: string, name: string) {
-  if (confirm(`Delete workflow "${name}"?`)) {
-    workflowStore.deleteWorkflow(id)
-    // TODO: Implement backend API call to delete workflow
+async function handleDelete(id: string, name: string) {
+  if (confirm(`Are you sure you want to permanently delete workflow "${name}"?\n\nThis will also delete all steps and transitions. This action cannot be undone.`)) {
+    try {
+      await workflowStore.deleteWorkflow(id)
+    } catch (err) {
+      console.error('Failed to delete workflow:', err)
+    }
   }
 }
 
@@ -185,8 +191,8 @@ onMounted(() => {
             <TableRow v-for="workflow in workflowStore.workflows" :key="workflow.id">
               <TableCell class="font-medium">{{ workflow.name }}</TableCell>
               <TableCell class="max-w-xs truncate">{{ workflow.description || '-' }}</TableCell>
-              <TableCell>{{ workflow.nodes.length }}</TableCell>
-              <TableCell>{{ workflow.edges.length }}</TableCell>
+              <TableCell>{{ workflow.stepCount ?? 0 }}</TableCell>
+              <TableCell>{{ workflow.transitionCount ?? 0 }}</TableCell>
               <TableCell>
                 <div class="flex items-center gap-2">
                   <Switch
