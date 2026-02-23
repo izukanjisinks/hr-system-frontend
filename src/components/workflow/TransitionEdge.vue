@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, inject } from 'vue'
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, Position } from '@vue-flow/core'
-import { useWorkflowStore } from '@/stores/workflow'
 import type { WorkflowTransition } from '@/stores/workflow'
-
-// @ts-ignore - Vue SFC component
-import TransitionEditDialog from './TransitionEditDialog.vue'
 
 const props = defineProps<{
   id: string
@@ -21,8 +17,8 @@ const props = defineProps<{
   targetHandleId?: string
 }>()
 
-const workflowStore = useWorkflowStore()
-const showEditDialog = ref(false)
+// Inject the edit handler from parent WorkflowEditor
+const openTransitionEdit = inject<(id: string, data: WorkflowTransition) => void>('openTransitionEdit')
 
 const path = computed(() => {
   const [edgePath] = getBezierPath({
@@ -49,37 +45,16 @@ const labelPosition = computed(() => {
   }
 })
 
-function handleEditClick() {
-  showEditDialog.value = true
-}
+function handleEditClick(event: MouseEvent) {
+  // Blur the button to release focus before opening dialog
+  // This prevents aria-hidden focus conflicts with VueFlow viewport
+  if (event.target instanceof HTMLElement) {
+    event.target.blur()
+  }
 
-async function handleSave(data: Partial<WorkflowTransition>) {
-  // Update local state first
-  workflowStore.updateEdgeData(props.id, data)
-
-  // Determine if this is a new transition (temporary ID) or existing transition (UUID)
-  const isNewTransition = props.id.startsWith('e')
-
-  try {
-    if (isNewTransition && workflowStore.currentWorkflow) {
-      // Get the edge to find source and target
-      const edge = workflowStore.currentWorkflow.edges.find(e => e.id === props.id)
-      if (edge) {
-        // Create new transition in backend
-        await workflowStore.createTransition(
-          workflowStore.currentWorkflow.id,
-          edge.source,
-          edge.target,
-          data as WorkflowTransition
-        )
-      }
-    } else if (!isNewTransition) {
-      // Update existing transition in backend
-      await workflowStore.updateTransition(props.id, data)
-    }
-  } catch (err) {
-    console.error('Failed to save transition:', err)
-    alert('Failed to save transition. Please try again.')
+  // Call the injected handler to open the centralized dialog
+  if (openTransitionEdit) {
+    openTransitionEdit(props.id, props.data)
   }
 }
 </script>
@@ -109,13 +84,5 @@ async function handleSave(data: Partial<WorkflowTransition>) {
         </button>
       </div>
     </EdgeLabelRenderer>
-
-    <!-- Edit Dialog -->
-    <TransitionEditDialog
-      :open="showEditDialog"
-      :transition-data="data"
-      @update:open="(val) => showEditDialog = val"
-      @save="handleSave"
-    />
   </g>
 </template>

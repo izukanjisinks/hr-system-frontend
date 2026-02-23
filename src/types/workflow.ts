@@ -48,6 +48,48 @@ export interface GetWorkflowsResponse {
   workflows: BackendWorkflow[]
 }
 
+// Workflow task types
+export interface WorkflowTask {
+  id: string
+  instance_id: string
+  step_id: string
+  step_name: string
+  assigned_to: string
+  assigned_by: string
+  status: 'pending' | 'in_progress' | 'completed' | 'skipped'
+  due_date: string
+  task_details?: {
+    task_id: string
+    task_type: string
+    task_description: string
+    sender_details: {
+      sender_id: string
+      sender_name: string
+      position: string
+      department: string
+    }
+  }
+  created_at: string
+  updated_at: string
+}
+
+export interface GetTasksResponse {
+  count: number
+  tasks: WorkflowTask[]
+}
+
+// Task action types
+export interface ProcessTaskActionPayload {
+  action: string
+  comments?: string
+}
+
+export interface ProcessTaskActionResponse {
+  message: string
+  instance_id: string
+  new_step?: string
+}
+
 export interface CreateWorkflowPayload {
   name: string
   description: string

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,11 @@ const emit = defineEmits<{
   'save': [data: Partial<WorkflowTransition>]
 }>()
 
+const actionOptions = [
+  { value: 'submit', label: 'Submit' },
+  { value: 'review', label: 'Review' },
+]
+
 const conditionTypes = [
   { value: 'always', label: 'Always' },
   { value: 'equals', label: 'Equals' },
@@ -29,20 +34,46 @@ const conditionTypes = [
   { value: 'contains', label: 'Contains' },
 ]
 
-const formData = ref({
+const formData = ref<{
+  actionName: string
+  conditionType: string
+  conditionValue: string
+}>({
   actionName: '',
   conditionType: 'always',
   conditionValue: '',
 })
 
+const isFormReady = ref(false)
+
 // Watch both transitionData and open state to reset form when dialog opens
-watch([() => props.transitionData, () => props.open], ([newData, isOpen]) => {
-  if (newData && isOpen) {
+watch([() => props.transitionData, () => props.open], async ([newData, isOpen]) => {
+  console.log('TransitionEditDialog watcher fired - isOpen:', isOpen, 'newData:', newData)
+  console.log('Before: isFormReady:', isFormReady.value)
+
+  if (isOpen) {
+    // First set form not ready
+    isFormReady.value = false
+
+    // Wait for next tick to ensure any pending renders are done
+    await nextTick()
+
+    // Reset form with data or defaults
     formData.value = {
-      actionName: newData.actionName || '',
-      conditionType: newData.conditionType || 'always',
-      conditionValue: newData.conditionValue || '',
+      actionName: newData?.actionName || newData?.name || '',
+      conditionType: newData?.conditionType || 'always',
+      conditionValue: newData?.conditionValue || '',
     }
+
+    console.log('Form data populated:', formData.value)
+
+    // Wait another tick before marking ready
+    await nextTick()
+    isFormReady.value = true
+    console.log('After: isFormReady:', isFormReady.value)
+  } else {
+    isFormReady.value = false
+    console.log('Dialog closed, isFormReady set to false')
   }
 }, { immediate: true })
 
@@ -71,17 +102,24 @@ function handleClose() {
         </DialogDescription>
       </DialogHeader>
 
-      <div class="grid gap-4 py-4">
+      <div v-if="isFormReady" class="grid gap-4 py-4">
         <!-- Action Name -->
         <div class="grid gap-2">
           <Label for="action-name">Action Name</Label>
-          <input
+          <select
             id="action-name"
             v-model="formData.actionName"
-            type="text"
-            placeholder="e.g., approve, reject, submit"
-            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          />
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <option value="" disabled>Select an action</option>
+            <option
+              v-for="action in actionOptions"
+              :key="action.value"
+              :value="action.value"
+            >
+              {{ action.label }}
+            </option>
+          </select>
           <p class="text-xs text-muted-foreground">
             The action that triggers this transition
           </p>
@@ -89,16 +127,22 @@ function handleClose() {
 
         <!-- Condition Type -->
         <div class="grid gap-2">
-          <Label for="condition-type">Condition Type</Label>
-          <select
-            id="condition-type"
-            v-model="formData.conditionType"
-            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          >
-            <option v-for="type in conditionTypes" :key="type.value" :value="type.value">
-              {{ type.label }}
-            </option>
-          </select>
+          <Label>Condition Type</Label>
+          <div class="flex flex-col gap-2">
+            <label
+              v-for="type in conditionTypes"
+              :key="type.value"
+              class="flex items-center gap-2 cursor-pointer"
+            >
+              <input
+                type="radio"
+                :value="type.value"
+                v-model="formData.conditionType"
+                class="w-4 h-4"
+              />
+              <span class="text-sm">{{ type.label }}</span>
+            </label>
+          </div>
           <p class="text-xs text-muted-foreground">
             When should this transition be allowed?
           </p>
@@ -118,6 +162,9 @@ function handleClose() {
             The value to check against
           </p>
         </div>
+      </div>
+      <div v-else class="grid gap-4 py-4">
+        <p class="text-sm text-muted-foreground">Loading...</p>
       </div>
 
       <DialogFooter>

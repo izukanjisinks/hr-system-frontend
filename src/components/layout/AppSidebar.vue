@@ -12,6 +12,7 @@ import {
   UserSearch,
   TrendingUp,
   GitBranch,
+  CheckSquare,
   LogOut,
   ChevronUp,
   User2,
@@ -87,6 +88,7 @@ const navGroups = [
     label: 'System',
     items: [
       { title: 'Workflows', icon: GitBranch, routeName: 'workflows' },
+      { title: 'Approvals', icon: CheckSquare, routeName: 'approvals' },
     ],
   },
 ]

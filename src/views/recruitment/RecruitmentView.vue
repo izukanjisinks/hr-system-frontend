@@ -1,8 +1,10 @@
+<script setup lang="ts">
+import UnderDevelopment from '@/components/common/UnderDevelopment.vue'
+</script>
+
 <template>
-  <div class="flex flex-col gap-6 p-6">
-    <div>
-      <h1 class="text-2xl font-semibold">Recruitment</h1>
-      <p class="text-muted-foreground">This section is coming soon.</p>
-    </div>
-  </div>
+  <UnderDevelopment
+    feature-name="Recruitment Management"
+    description="We're developing a powerful recruitment system with applicant tracking, job posting management, interview scheduling, candidate evaluation, and hiring workflows. Streamline your hiring process from start to finish."
+  />
 </template>

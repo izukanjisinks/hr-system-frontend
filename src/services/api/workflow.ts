@@ -11,6 +11,9 @@ import type {
   BackendWorkflowTransition,
   CreateTransitionPayload,
   UpdateTransitionPayload,
+  GetTasksResponse,
+  ProcessTaskActionPayload,
+  ProcessTaskActionResponse,
 } from '@/types/workflow'
 
 export const workflowApi = {
@@ -83,5 +86,20 @@ export const workflowApi = {
 
   deleteTransition(transitionId: string): Promise<void> {
     return apiClient.delete<void>(`/admin/workflow-transitions/${transitionId}`)
+  },
+
+  // Task Management
+  getMyTasks(status?: 'pending' | 'in_progress' | 'completed' | 'skipped'): Promise<GetTasksResponse> {
+    const params = status ? { status } : {}
+    return apiClient.get<GetTasksResponse>('/workflow/my-tasks', { params })
+  },
+
+  getMyPendingTasks(): Promise<GetTasksResponse> {
+    return apiClient.get<GetTasksResponse>('/workflow/my-tasks/pending')
+  },
+
+  // Task Actions
+  processTaskAction(instanceId: string, payload: ProcessTaskActionPayload): Promise<ProcessTaskActionResponse> {
+    return apiClient.post<ProcessTaskActionResponse>(`/workflow/instances/${instanceId}/action`, payload)
   },
 }

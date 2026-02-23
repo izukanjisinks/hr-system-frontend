@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, provide } from 'vue'
 import { VueFlow, useVueFlow, MarkerType } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -7,8 +7,9 @@ import { MiniMap } from '@vue-flow/minimap'
 import { useWorkflowStore } from '@/stores/workflow'
 import StateNode from './StateNode.vue'
 import TransitionEdge from './TransitionEdge.vue'
+import TransitionEditDialog from './TransitionEditDialog.vue'
 import type { Connection, Node } from '@vue-flow/core'
-import type { WorkflowState } from '@/stores/workflow'
+import type { WorkflowState, WorkflowTransition } from '@/stores/workflow'
 
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
@@ -17,6 +18,11 @@ import '@vue-flow/minimap/dist/style.css'
 
 const workflowStore = useWorkflowStore()
 const { onConnect, onNodeDragStop, addNodes, project, vueFlowRef } = useVueFlow()
+
+// Centralized transition edit dialog state
+const showTransitionDialog = ref(false)
+const editingTransitionId = ref<string>('')
+const editingTransitionData = ref<WorkflowTransition | null>(null)
 
 const nodeTypes = {
   state: StateNode,
@@ -134,6 +140,49 @@ function onDragOver(event: DragEvent) {
     event.dataTransfer.dropEffect = 'move'
   }
 }
+
+// Handle transition edit request from edge
+function handleTransitionEdit(transitionId: string, data: WorkflowTransition) {
+  editingTransitionId.value = transitionId
+  editingTransitionData.value = data
+  showTransitionDialog.value = true
+}
+
+// Provide the edit handler to child edge components
+provide('openTransitionEdit', handleTransitionEdit)
+
+// Handle transition save
+async function handleTransitionSave(data: Partial<WorkflowTransition>) {
+  if (!editingTransitionId.value) return
+
+  // Update local state first
+  workflowStore.updateEdgeData(editingTransitionId.value, data)
+
+  // Determine if this is a new transition (temporary ID) or existing transition (UUID)
+  const isNewTransition = editingTransitionId.value.startsWith('e')
+
+  try {
+    if (isNewTransition && workflowStore.currentWorkflow) {
+      // Get the edge to find source and target
+      const edge = workflowStore.currentWorkflow.edges.find(e => e.id === editingTransitionId.value)
+      if (edge) {
+        // Create new transition in backend
+        await workflowStore.createTransition(
+          workflowStore.currentWorkflow.id,
+          edge.source,
+          edge.target,
+          data as WorkflowTransition
+        )
+      }
+    } else if (!isNewTransition) {
+      // Update existing transition in backend
+      await workflowStore.updateTransition(editingTransitionId.value, data)
+    }
+  } catch (err) {
+    console.error('Failed to save transition:', err)
+    alert('Failed to save transition. Please try again.')
+  }
+}
 </script>
 
 <template>
@@ -157,6 +206,14 @@ function onDragOver(event: DragEvent) {
     <div v-else class="flex items-center justify-center h-full text-muted-foreground">
       Select a workflow to edit
     </div>
+
+    <!-- Centralized Transition Edit Dialog -->
+    <TransitionEditDialog
+      :open="showTransitionDialog"
+      :transition-data="editingTransitionData"
+      @update:open="(val) => showTransitionDialog = val"
+      @save="handleTransitionSave"
+    />
   </div>
 </template>
 

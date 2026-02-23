@@ -90,6 +90,11 @@ const router = createRouter({
           name: 'workflow-detail',
           component: () => import('@/views/workflows/WorkflowDetailView.vue'),
         },
+        {
+          path: 'approvals',
+          name: 'approvals',
+          component: () => import('@/views/approvals/ApprovalsView.vue'),
+        },
       ],
     },
 
