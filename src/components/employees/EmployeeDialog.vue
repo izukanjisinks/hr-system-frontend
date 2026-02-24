@@ -398,7 +398,7 @@ function handleClose() {
               </Select>
             </div>
             <div class="grid gap-2">
-              <Label for="position_id">Position *</Label>
+              <Label for="position_id">Job Title *</Label>
               <Select v-model="formData.position_id">
                 <SelectTrigger>
                   <SelectValue placeholder="Select position" />

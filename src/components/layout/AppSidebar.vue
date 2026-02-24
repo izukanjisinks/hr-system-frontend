@@ -17,6 +17,8 @@ import {
   LogOut,
   ChevronUp,
   User2,
+  RotateCcw,
+  Mail,
 } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -59,7 +61,7 @@ const navGroups = [
     ],
   },
   {
-    label: 'Leave & Attendance',
+    label: 'Leave Requests & Approvals',
     items: [
       { title: 'Leave Requests', icon: CalendarDays, routeName: 'leave' },
       { title: 'Leave Approvals', icon: CheckSquare, routeName: 'approvals' },
@@ -87,12 +89,21 @@ const navGroups = [
     ],
   },
   {
-    label: 'System',
+    label: 'Password Management',
     items: [
-      { title: 'Workflows', icon: GitBranch, routeName: 'workflows' },
+      
+      { title: 'Password Reset Requests', icon: RotateCcw, routeName: 'password-policy' },
       { title: 'Password Policy', icon: ShieldCheck, routeName: 'password-policy' },
     ],
   },
+  {
+    label: 'System',
+    items: [
+      { title: 'Workflows', icon: GitBranch, routeName: 'workflows' },
+      { title: 'Smtp', icon: Mail, routeName: 'workflows' },
+    ],
+  },
+  
 ]
 
 async function handleLogout() {

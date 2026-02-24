@@ -5,6 +5,11 @@ export interface GeneratePasswordResponse {
   password: string
 }
 
+export interface ChangePasswordPayload {
+  old_password: string
+  new_password: string
+}
+
 export const passwordApi = {
   getPasswordPolicy(): Promise<PasswordPolicy> {
     return apiClient.get<PasswordPolicy>('/password-policy')
@@ -16,5 +21,9 @@ export const passwordApi = {
 
   generatePassword(): Promise<GeneratePasswordResponse> {
     return apiClient.get<GeneratePasswordResponse>('/password-policy/generate')
+  },
+
+  changePassword(payload: ChangePasswordPayload): Promise<void> {
+    return apiClient.post('/auth/change-password', payload)
   },
 }

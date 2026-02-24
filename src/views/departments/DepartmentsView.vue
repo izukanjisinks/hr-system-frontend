@@ -59,8 +59,12 @@ async function loadDepartments() {
     const response = await departmentApi.getDepartments({ page: page.value, page_size: pageSize.value })
     departments.value = response.data
     total.value = response.total
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to load departments:', err)
+    // Don't show error dialog for 403 Forbidden - API client already handles it
+    if (err?.error?.code === 'FORBIDDEN' || err?.status === 403) {
+      return
+    }
     resultDialog.value = {
       open: true,
       type: 'error',

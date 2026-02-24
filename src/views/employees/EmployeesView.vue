@@ -70,8 +70,12 @@ async function loadEmployees() {
       id: emp.id,
       name: `${emp.first_name} ${emp.last_name}`,
     }))
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to load employees:', err)
+    // Don't show error dialog for 403 Forbidden - API client already handles it
+    if (err?.error?.code === 'FORBIDDEN') {
+      return
+    }
     resultDialog.value = {
       open: true,
       type: 'error',

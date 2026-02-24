@@ -60,8 +60,12 @@ async function loadPositions() {
     const response = await positionApi.getPositions({ page: page.value, page_size: pageSize.value })
     positions.value = response.data
     total.value = response.total
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to load positions:', err)
+    // Don't show error dialog for 403 Forbidden - API client already handles it
+    if (err?.error?.code === 'FORBIDDEN' || err?.status === 403) {
+      return
+    }
     resultDialog.value = {
       open: true,
       type: 'error',

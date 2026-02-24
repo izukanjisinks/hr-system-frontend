@@ -12,18 +12,31 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import ChangePasswordDialog from '@/components/auth/ChangePasswordDialog.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
 const email = ref('')
 const password = ref('')
+const showChangePasswordDialog = ref(false)
 
 async function handleSubmit() {
   const success = await authStore.login({ email: email.value, password: password.value })
   if (success) {
-    router.push({ name: 'dashboard' })
+    // Check if user needs to change password
+    if (authStore.user?.change_password) {
+      showChangePasswordDialog.value = true
+    } else {
+      router.push({ name: 'dashboard' })
+    }
   }
+}
+
+function handlePasswordChanged() {
+  // After successful password change, redirect to dashboard
+  showChangePasswordDialog.value = false
+  router.push({ name: 'dashboard' })
 }
 </script>
 
@@ -89,5 +102,13 @@ async function handleSubmit() {
         </Card>
       </div>
     </div>
+
+    <!-- Change Password Dialog -->
+    <ChangePasswordDialog
+      :open="showChangePasswordDialog"
+      :current-password="password"
+      @update:open="(val) => (showChangePasswordDialog = val)"
+      @success="handlePasswordChanged"
+    />
   </div>
 </template>
