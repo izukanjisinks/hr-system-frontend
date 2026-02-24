@@ -12,8 +12,9 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Loader2, User, AlertCircle } from 'lucide-vue-next'
+import { Loader2, User, AlertCircle, RefreshCw } from 'lucide-vue-next'
 import { employeeApi } from '@/services/api/employee'
+import { passwordApi } from '@/services/api/password'
 import type { Employee, CreateEmployeePayload, UpdateEmployeePayload } from '@/types/employee'
 
 const props = defineProps<{
@@ -32,6 +33,7 @@ const emit = defineEmits<{
 const saving = ref(false)
 const errorMessage = ref('')
 const loadingManagers = ref(false)
+const generatingPassword = ref(false)
 const departmentManagers = ref<Array<{ id: string; name: string }>>([])
 
 const formData = ref({
@@ -55,6 +57,7 @@ const formData = ref({
   hire_date: '',
   employment_type: 'full_time',
   employment_status: 'active',
+  password: '',
 })
 
 const isEditMode = computed(() => props.employee !== null)
@@ -135,6 +138,7 @@ watch([() => props.open, () => props.employee], ([isOpen, employee]) => {
       hire_date: employee.hire_date.split('T')[0],
       employment_type: employee.employment_type,
       employment_status: employee.employment_status,
+      password: '', // Password not shown in edit mode
     }
     // Load managers for the employee's department
     if (employee.department_id) {
@@ -167,6 +171,21 @@ function resetForm() {
     hire_date: '',
     employment_type: 'full_time',
     employment_status: 'active',
+    password: '',
+  }
+}
+
+// Generate password function
+async function handleGeneratePassword() {
+  generatingPassword.value = true
+  try {
+    const response = await passwordApi.generatePassword()
+    formData.value.password = response.password
+  } catch (err) {
+    console.error('Failed to generate password:', err)
+    errorMessage.value = 'Failed to generate password. Please try again.'
+  } finally {
+    generatingPassword.value = false
   }
 }
 
@@ -194,6 +213,11 @@ async function handleSave() {
     // Set manager_id to null if empty
     if (!payload.manager_id) {
       payload.manager_id = null
+    }
+
+    // Remove password field if in edit mode (we don't send password when updating)
+    if (isEditMode.value) {
+      delete payload.password
     }
 
     console.log('Employee Dialog Payload:', JSON.stringify(payload, null, 2))
@@ -267,6 +291,21 @@ function handleClose() {
               <Label for="personal_email">Personal Email</Label>
               <Input id="personal_email" v-model="formData.personal_email" type="email" />
             </div>
+          </div>
+
+          <!-- Password Field (Create Mode Only) -->
+          <div v-if="!isEditMode" class="grid gap-2">
+            <Label for="password">Password *</Label>
+            <div class="flex gap-2">
+              <Input id="password" v-model="formData.password" type="text" required class="flex-1" placeholder="Generate or enter password" />
+              <Button type="button" variant="outline" @click="handleGeneratePassword" :disabled="generatingPassword">
+                <RefreshCw v-if="generatingPassword" class="w-4 h-4 animate-spin" />
+                <RefreshCw v-else class="w-4 h-4" />
+              </Button>
+            </div>
+            <p class="text-xs text-muted-foreground">
+              Click the button to generate a secure password that meets policy requirements
+            </p>
           </div>
 
           <div class="grid grid-cols-3 gap-4">
