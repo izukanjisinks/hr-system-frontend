@@ -148,7 +148,14 @@ async function handleSaveEmployee(payload: any, onError?: (error: string) => voi
     await loadEmployees()
   } catch (err: any) {
     console.error('Failed to save employee:', err)
-    const errorMsg = err?.response?.data?.error?.message || err?.response?.data?.message || 'Unable to save employee. Please try again.'
+
+    // The error can be in multiple locations depending on how the API client returns it
+    const errorMsg =
+      err?.error?.message ||                    // Direct error object
+      err?.response?.data?.error?.message ||    // Nested in response.data
+      err?.response?.data?.message ||           // Direct in response.data
+      err?.message ||                           // Standard error message
+      'Unable to save employee. Please try again.'
 
     // Pass error back to dialog if callback provided
     if (onError) {
