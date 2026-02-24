@@ -29,4 +29,8 @@ export const employeeApi = {
   async deleteEmployee(id: string): Promise<void> {
     return apiClient.delete(`/hr/employees/${id}`)
   },
+
+  async getManagersByDepartment(departmentId: string): Promise<Employee[]> {
+    return apiClient.get(`/hr/departments/${departmentId}/managers`)
+  },
 }

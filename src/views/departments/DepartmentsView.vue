@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import { departmentApi, type Department } from '@/services/api/department'
+import { employeeApi } from '@/services/api/employee'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -69,6 +70,25 @@ async function loadDepartments() {
   } finally {
     loading.value = false
   }
+}
+
+async function loadEmployees() {
+  try {
+    const response = await employeeApi.getEmployees({ page: 1, page_size: 100, status: 'active' })
+    managers.value = response.data.map((emp) => ({
+      id: emp.id,
+      name: `${emp.first_name} ${emp.last_name}`,
+    }))
+  } catch (err) {
+    console.error('Failed to load employees:', err)
+  }
+}
+
+async function loadInitialData() {
+  await Promise.all([
+    loadDepartments(),
+    loadEmployees(),
+  ])
 }
 
 function handleAddDepartment() {
@@ -157,7 +177,7 @@ watch(page, () => {
 })
 
 onMounted(() => {
-  loadDepartments()
+  loadInitialData()
 })
 </script>
 

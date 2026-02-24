@@ -37,6 +37,7 @@ const formData = ref({
   description: '',
   parent_department_id: '',
   manager_id: '',
+  is_active: true,
 })
 
 const isEditMode = computed(() => props.department !== null)
@@ -61,6 +62,7 @@ watch([() => props.open, () => props.department], ([isOpen, department]) => {
       description: department.description || '',
       parent_department_id: department.parent_department_id || '',
       manager_id: department.manager_id || '',
+      is_active: department.is_active,
     }
   } else {
     resetForm()
@@ -74,6 +76,7 @@ function resetForm() {
     description: '',
     parent_department_id: '',
     manager_id: '',
+    is_active: true,
   }
 }
 

@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2, User, AlertCircle } from 'lucide-vue-next'
+import { employeeApi } from '@/services/api/employee'
 import type { Employee, CreateEmployeePayload, UpdateEmployeePayload } from '@/types/employee'
 
 const props = defineProps<{
@@ -30,6 +31,8 @@ const emit = defineEmits<{
 
 const saving = ref(false)
 const errorMessage = ref('')
+const loadingManagers = ref(false)
+const departmentManagers = ref<Array<{ id: string; name: string }>>([])
 
 const formData = ref({
   employee_number: '',
@@ -56,6 +59,52 @@ const formData = ref({
 
 const isEditMode = computed(() => props.employee !== null)
 const dialogTitle = computed(() => isEditMode.value ? 'Edit Employee' : 'Add New Employee')
+
+// Available managers (from department or fallback to all managers)
+const availableManagers = computed(() => {
+  return departmentManagers.value.length > 0 ? departmentManagers.value : props.managers
+})
+
+// Load managers for selected department
+async function loadManagersForDepartment(departmentId: string) {
+  if (!departmentId) {
+    departmentManagers.value = []
+    return
+  }
+
+  loadingManagers.value = true
+  try {
+    const response = await employeeApi.getManagersByDepartment(departmentId)
+    console.log('Managers response:', response)
+
+    // Handle if response is null or not an array
+    if (!response || !Array.isArray(response)) {
+      console.warn('No managers found or invalid response format:', response)
+      departmentManagers.value = []
+      return
+    }
+
+    departmentManagers.value = response.map((mgr) => ({
+      id: mgr.id,
+      name: `${mgr.first_name} ${mgr.last_name}`,
+    }))
+  } catch (err) {
+    console.error('Failed to load managers for department:', err)
+    // Fall back to showing all managers
+    departmentManagers.value = []
+  } finally {
+    loadingManagers.value = false
+  }
+}
+
+// Watch for department changes to load managers
+watch(() => formData.value.department_id, (newDepartmentId) => {
+  if (newDepartmentId) {
+    loadManagersForDepartment(newDepartmentId)
+  } else {
+    departmentManagers.value = []
+  }
+})
 
 // Watch for dialog open/close and employee changes
 watch([() => props.open, () => props.employee], ([isOpen, employee]) => {
@@ -86,6 +135,10 @@ watch([() => props.open, () => props.employee], ([isOpen, employee]) => {
       hire_date: employee.hire_date.split('T')[0],
       employment_type: employee.employment_type,
       employment_status: employee.employment_status,
+    }
+    // Load managers for the employee's department
+    if (employee.department_id) {
+      loadManagersForDepartment(employee.department_id)
     }
   } else {
     resetForm()
@@ -323,16 +376,19 @@ function handleClose() {
           <div class="grid grid-cols-2 gap-4">
             <div class="grid gap-2">
               <Label for="manager_id">Manager</Label>
-              <Select v-model="formData.manager_id">
+              <Select v-model="formData.manager_id" :disabled="loadingManagers">
                 <SelectTrigger>
-                  <SelectValue placeholder="No Manager" />
+                  <SelectValue :placeholder="loadingManagers ? 'Loading managers...' : 'No Manager'" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem v-for="mgr in managers" :key="mgr.id" :value="mgr.id">
+                  <SelectItem v-for="mgr in availableManagers" :key="mgr.id" :value="mgr.id">
                     {{ mgr.name }}
                   </SelectItem>
                 </SelectContent>
               </Select>
+              <p v-if="formData.department_id && departmentManagers.length > 0" class="text-xs text-muted-foreground">
+                Showing managers in this department
+              </p>
             </div>
             <div class="grid gap-2">
               <Label for="hire_date">Hire Date *</Label>
