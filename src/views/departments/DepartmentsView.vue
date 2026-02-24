@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { departmentApi, type Department } from '@/services/api/department'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,13 +14,14 @@ import {
 } from '@/components/ui/table'
 import DepartmentDialog from '@/components/departments/DepartmentDialog.vue'
 import ResultDialog from '@/components/common/ResultDialog.vue'
+import Pagination from '@/components/common/Pagination.vue'
 import { Building2, Plus, Search, Loader2, Pencil, Trash2 } from 'lucide-vue-next'
 
 const departments = ref<Department[]>([])
 const loading = ref(false)
 const searchQuery = ref('')
 const page = ref(1)
-const pageSize = ref(20)
+const pageSize = ref(10)
 const total = ref(0)
 
 // Dialog states
@@ -150,6 +151,11 @@ async function handleDeleteDepartment(department: Department) {
   }
 }
 
+// Watch for page changes
+watch(page, () => {
+  loadDepartments()
+})
+
 onMounted(() => {
   loadDepartments()
 })
@@ -262,6 +268,14 @@ onMounted(() => {
           </TableRow>
         </TableBody>
       </Table>
+
+      <!-- Pagination -->
+      <Pagination
+        :current-page="page"
+        :page-size="pageSize"
+        :total="total"
+        @update:page="(newPage) => (page = newPage)"
+      />
     </div>
 
     <!-- Department Dialog -->

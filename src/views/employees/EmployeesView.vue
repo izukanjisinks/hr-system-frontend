@@ -17,13 +17,14 @@ import {
 } from '@/components/ui/table'
 import EmployeeDialog from '@/components/employees/EmployeeDialog.vue'
 import ResultDialog from '@/components/common/ResultDialog.vue'
+import Pagination from '@/components/common/Pagination.vue'
 import { Users, Plus, Search, Loader2, Pencil, Trash2 } from 'lucide-vue-next'
 
 const employees = ref<Employee[]>([])
 const loading = ref(false)
 const searchQuery = ref('')
 const page = ref(1)
-const pageSize = ref(20)
+const pageSize = ref(10)
 const total = ref(0)
 
 // Dialog states
@@ -225,6 +226,11 @@ watch(dialogOpen, (isOpen) => {
   }
 })
 
+// Watch for page changes
+watch(page, () => {
+  loadEmployees()
+})
+
 onMounted(() => {
   loadInitialData()
 })
@@ -334,6 +340,14 @@ onMounted(() => {
           </TableRow>
         </TableBody>
       </Table>
+
+      <!-- Pagination -->
+      <Pagination
+        :current-page="page"
+        :page-size="pageSize"
+        :total="total"
+        @update:page="(newPage) => (page = newPage)"
+      />
     </div>
 
     <!-- Employee Dialog -->

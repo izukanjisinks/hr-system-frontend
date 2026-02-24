@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { positionApi, type Position } from '@/services/api/position'
 import { departmentApi } from '@/services/api/department'
 import { Button } from '@/components/ui/button'
@@ -15,13 +15,14 @@ import {
 } from '@/components/ui/table'
 import PositionDialog from '@/components/positions/PositionDialog.vue'
 import ResultDialog from '@/components/common/ResultDialog.vue'
+import Pagination from '@/components/common/Pagination.vue'
 import { Briefcase, Plus, Search, Loader2, Pencil, Trash2 } from 'lucide-vue-next'
 
 const positions = ref<Position[]>([])
 const loading = ref(false)
 const searchQuery = ref('')
 const page = ref(1)
-const pageSize = ref(20)
+const pageSize = ref(10)
 const total = ref(0)
 
 // Dialog states
@@ -179,6 +180,11 @@ function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
+// Watch for page changes
+watch(page, () => {
+  loadPositions()
+})
+
 onMounted(() => {
   loadInitialData()
 })
@@ -288,6 +294,14 @@ onMounted(() => {
           </TableRow>
         </TableBody>
       </Table>
+
+      <!-- Pagination -->
+      <Pagination
+        :current-page="page"
+        :page-size="pageSize"
+        :total="total"
+        @update:page="(newPage) => (page = newPage)"
+      />
     </div>
 
     <!-- Position Dialog -->
