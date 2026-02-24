@@ -221,8 +221,9 @@ onMounted(() => {
                 <p class="text-xs text-muted-foreground">At least one uppercase letter (A-Z)</p>
               </div>
               <Switch
-                :key="`uppercase-${policy.id}-${formData.require_uppercase}`"
-                v-model:checked="formData.require_uppercase"
+                :key="`uppercase-${policy.id}`"
+                :default-checked="formData.require_uppercase"
+                @update:checked="(val) => formData.require_uppercase = val"
               />
             </div>
 
@@ -232,8 +233,9 @@ onMounted(() => {
                 <p class="text-xs text-muted-foreground">At least one lowercase letter (a-z)</p>
               </div>
               <Switch
-                :key="`lowercase-${policy.id}-${formData.require_lowercase}`"
-                v-model:checked="formData.require_lowercase"
+                :key="`lowercase-${policy.id}`"
+                :default-checked="formData.require_lowercase"
+                @update:checked="(val) => formData.require_lowercase = val"
               />
             </div>
 
@@ -243,8 +245,9 @@ onMounted(() => {
                 <p class="text-xs text-muted-foreground">At least one numeric digit (0-9)</p>
               </div>
               <Switch
-                :key="`numbers-${policy.id}-${formData.require_numbers}`"
-                v-model:checked="formData.require_numbers"
+                :key="`numbers-${policy.id}`"
+                :default-checked="formData.require_numbers"
+                @update:checked="(val) => formData.require_numbers = val"
               />
             </div>
 
@@ -254,8 +257,9 @@ onMounted(() => {
                 <p class="text-xs text-muted-foreground">At least one special character (!@#$%^&*)</p>
               </div>
               <Switch
-                :key="`special-${policy.id}-${formData.require_special_chars}`"
-                v-model:checked="formData.require_special_chars"
+                :key="`special-${policy.id}`"
+                :default-checked="formData.require_special_chars"
+                @update:checked="(val) => formData.require_special_chars = val"
               />
             </div>
           </div>
