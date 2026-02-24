@@ -48,6 +48,7 @@ export interface CreateEmployeePayload {
   hire_date: string
   employment_type: string
   employment_status: string
+  password: string
 }
 
 export interface UpdateEmployeePayload extends Partial<CreateEmployeePayload> {
