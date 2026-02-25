@@ -102,7 +102,7 @@ const navGroups = [
     items: [
       { title: 'Workflows', icon: GitBranch, routeName: 'workflows' },
       { title: 'Password Policy', icon: ShieldCheck, routeName: 'password-policy' },
-      { title: 'System Users', icon: UserCog2Icon, routeName: 'password-policy' },
+      { title: 'System Users', icon: UserCog2Icon, routeName: 'system-users' },
       { title: 'Smtp', icon: Mail, routeName: 'workflows' },
     ],
   },

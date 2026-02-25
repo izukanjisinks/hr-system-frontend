@@ -11,7 +11,16 @@ import {
   CardDescription,
 } from '@/components/ui/card'
 import { Calendar } from '@/components/ui/calendar'
-import { CalendarDays, CalendarOff, CalendarCheck } from 'lucide-vue-next'
+import {
+  CalendarDays,
+  CalendarOff,
+  CalendarCheck,
+  Building2,
+  UserCheck,
+  Briefcase,
+  Calendar as CalendarIcon,
+  Shield,
+} from 'lucide-vue-next'
 import { Skeleton } from '@/components/ui/skeleton'
 import { today, getLocalTimeZone } from '@internationalized/date'
 
@@ -149,26 +158,55 @@ onMounted(() => {
             <Skeleton class="h-4 w-2/3" />
           </div>
         </CardContent>
-        <CardContent v-else-if="data" class="space-y-3">
-          <div class="flex justify-between text-sm">
-            <span class="text-muted-foreground">Department</span>
-            <span class="font-medium">{{ data.employee_details.department }}</span>
+        <CardContent v-else-if="data" class="space-y-4">
+          <div class="flex items-start gap-3">
+            <div class="size-9 rounded-lg bg-accent flex items-center justify-center shrink-0 mt-0.5">
+              <Building2 class="size-4 text-muted-foreground" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-muted-foreground">Department</p>
+              <p class="font-medium">{{ data.employee_details.department }}</p>
+            </div>
           </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-muted-foreground">Supervisor</span>
-            <span class="font-medium">{{ data.employee_details.supervisor }}</span>
+
+          <div class="flex items-start gap-3">
+            <div class="size-9 rounded-lg bg-accent flex items-center justify-center shrink-0 mt-0.5">
+              <UserCheck class="size-4 text-muted-foreground" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-muted-foreground">Supervisor</p>
+              <p class="font-medium">{{ data.employee_details.supervisor }}</p>
+            </div>
           </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-muted-foreground">Position Code</span>
-            <span class="font-medium">{{ data.employee_details.position_code }}</span>
+
+          <div class="flex items-start gap-3">
+            <div class="size-9 rounded-lg bg-accent flex items-center justify-center shrink-0 mt-0.5">
+              <Briefcase class="size-4 text-muted-foreground" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-muted-foreground">Position Code</p>
+              <p class="font-medium">{{ data.employee_details.position_code }}</p>
+            </div>
           </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-muted-foreground">Employment Period</span>
-            <span class="font-medium">{{ data.employee_details.employment_period }} months</span>
+
+          <div class="flex items-start gap-3">
+            <div class="size-9 rounded-lg bg-accent flex items-center justify-center shrink-0 mt-0.5">
+              <CalendarIcon class="size-4 text-muted-foreground" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-muted-foreground">Employment Period</p>
+              <p class="font-medium">{{ data.employee_details.employment_period }} months</p>
+            </div>
           </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-muted-foreground">Employment Type</span>
-            <span class="font-medium capitalize">{{ data.employee_details.role.replace('_', ' ') }}</span>
+
+          <div class="flex items-start gap-3">
+            <div class="size-9 rounded-lg bg-accent flex items-center justify-center shrink-0 mt-0.5">
+              <Shield class="size-4 text-muted-foreground" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-muted-foreground">Employment Type</p>
+              <p class="font-medium capitalize">{{ data.employee_details.role.replace('_', ' ') }}</p>
+            </div>
           </div>
         </CardContent>
       </Card>

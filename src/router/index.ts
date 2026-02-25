@@ -101,6 +101,11 @@ const router = createRouter({
           name: 'password-policy',
           component: () => import('@/views/system/PasswordPolicyView.vue'),
         },
+        {
+          path: 'system-users',
+          name: 'system-users',
+          component: () => import('@/views/system/SystemUsersView.vue'),
+        },
         // Profile
         {
           path: 'profile',
