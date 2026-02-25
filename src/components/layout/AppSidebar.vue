@@ -65,14 +65,14 @@ const navGroups = [
     items: [
       { title: 'Leave Requests', icon: CalendarDays, routeName: 'leave' },
       { title: 'Leave Approvals', icon: CheckSquare, routeName: 'approvals' },
-      { title: 'Attendance', icon: ClockAlert, routeName: 'attendance' },
-      { title: 'Holidays', icon: CalendarOff, routeName: 'holidays' },
+      // { title: 'Attendance', icon: ClockAlert, routeName: 'attendance' },
+      // { title: 'Holidays', icon: CalendarOff, routeName: 'holidays' },
     ],
   },
   {
     label: 'Payroll',
     items: [
-      { title: 'Payroll Runs', icon: DollarSign, routeName: 'payroll' },
+      // { title: 'Payroll Runs', icon: DollarSign, routeName: 'payroll' },
       { title: 'Payslips', icon: FileText, routeName: 'payslips' },
     ],
   },

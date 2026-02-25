@@ -2,6 +2,8 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { positionApi, type Position } from '@/services/api/position'
 import { departmentApi } from '@/services/api/department'
+import { roleApi } from '@/services/api/role'
+import type { Role } from '@/types/role'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -39,6 +41,9 @@ const resultDialog = ref({
 
 // Departments for dropdown
 const departments = ref<Array<{ id: string; name: string }>>([])
+
+// Roles for checkboxes
+const roles = ref<Role[]>([])
 
 // Computed
 const filteredPositions = computed(() => {
@@ -89,10 +94,20 @@ async function loadDepartments() {
   }
 }
 
+async function loadRoles() {
+  try {
+    const response = await roleApi.getRoles()
+    roles.value = response
+  } catch (err) {
+    console.error('Failed to load roles:', err)
+  }
+}
+
 async function loadInitialData() {
   await Promise.all([
     loadPositions(),
     loadDepartments(),
+    loadRoles(),
   ])
 }
 
@@ -313,6 +328,7 @@ onMounted(() => {
       :open="dialogOpen"
       :position="selectedPosition"
       :departments="departments"
+      :roles="roles"
       @update:open="(val) => (dialogOpen = val)"
       @save="(payload, onError) => handleSavePosition(payload, onError)"
     />

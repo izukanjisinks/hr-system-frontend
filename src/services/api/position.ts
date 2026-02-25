@@ -10,6 +10,7 @@ export interface Position {
   min_salary: number
   max_salary: number
   is_active: boolean
+  allowed_roles?: string[]
   created_at: string
   updated_at: string
 }
@@ -29,6 +30,7 @@ export interface CreatePositionPayload {
   min_salary: number
   max_salary: number
   description?: string
+  allowed_roles?: string[]
 }
 
 export interface UpdatePositionPayload {
@@ -39,6 +41,7 @@ export interface UpdatePositionPayload {
   min_salary?: number
   max_salary?: number
   description?: string
+  allowed_roles?: string[]
 }
 
 export const positionApi = {

@@ -13,13 +13,15 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Loader2, Briefcase, AlertCircle } from 'lucide-vue-next'
+import { Loader2, Briefcase, AlertCircle, Check } from 'lucide-vue-next'
 import type { Position, CreatePositionPayload, UpdatePositionPayload } from '@/services/api/position'
+import type { Role } from '@/types/role'
 
 const props = defineProps<{
   open: boolean
   position: Position | null
   departments: Array<{ id: string; name: string }>
+  roles: Role[]
 }>()
 
 const emit = defineEmits<{
@@ -34,6 +36,7 @@ const formData = ref({
   title: '',
   code: '',
   department_id: '',
+  role_id: '',
   grade_level: '',
   min_salary: 0,
   max_salary: 0,
@@ -54,6 +57,7 @@ watch([() => props.open, () => props.position], ([isOpen, position]) => {
       title: position.title,
       code: position.code,
       department_id: position.department_id,
+      role_id: position.role_id || '',
       grade_level: position.grade_level,
       min_salary: position.min_salary,
       max_salary: position.max_salary,
@@ -69,12 +73,38 @@ function resetForm() {
     title: '',
     code: '',
     department_id: '',
+    role_id: '',
     grade_level: '',
     min_salary: 0,
     max_salary: 0,
     description: '',
   }
 }
+
+function handleRoleToggle(roleId: string, checked: boolean | string) {
+  console.log('handleRoleToggle called:', { roleId, checked, currentSelection: formData.value.role_id })
+  const isChecked = Boolean(checked)
+
+  if (isChecked) {
+    // Radio behavior: set only this role, clearing others
+    console.log('Setting role to:', roleId)
+    formData.value.role_id = roleId
+  } else {
+    // If unchecking the currently selected role, clear it
+    if (formData.value.role_id === roleId) {
+      console.log('Clearing role')
+      formData.value.role_id = ''
+    }
+  }
+  console.log('After toggle, role_id is:', formData.value.role_id)
+}
+
+function isRoleSelected(roleId: string): boolean {
+  const selected = formData.value.role_id === roleId
+  console.log('isRoleSelected:', { roleId, currentRoleId: formData.value.role_id, selected })
+  return selected
+}
+
 
 async function handleSave() {
   saving.value = true
@@ -83,9 +113,9 @@ async function handleSave() {
   try {
     const payload: any = { ...formData.value }
 
-    // Convert salary strings to numbers
-    payload.min_salary = Number(payload.min_salary)
-    payload.max_salary = Number(payload.max_salary)
+    // Convert salary numbers to strings for API
+    payload.min_salary = String(payload.min_salary)
+    payload.max_salary = String(payload.max_salary)
 
     // Clean up empty optional fields
     if (!payload.description) delete payload.description
@@ -111,7 +141,7 @@ function handleClose() {
 
 <template>
   <Dialog :open="open" @update:open="(val) => emit('update:open', val)">
-    <DialogContent :key="position?.id || 'new'" class="sm:max-w-[600px]">
+    <DialogContent :key="position?.id || 'new'" class="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle class="flex items-center gap-2">
           <Briefcase class="w-5 h-5" />
@@ -182,6 +212,37 @@ function handleClose() {
             placeholder="Brief description of the position"
             rows="3"
           />
+        </div>
+
+        <div class="grid gap-2">
+          <Label>Allowed Role</Label>
+          <p class="text-xs text-muted-foreground mb-2">
+            Select which role can apply for this position
+          </p>
+          <div class="grid gap-2">
+            <div
+              v-for="role in roles"
+              :key="role.role_id"
+              class="hover:bg-accent/50 flex items-start gap-3 rounded-lg border p-3 cursor-pointer"
+              :class="isRoleSelected(role.role_id) ? 'border-primary bg-primary/5' : ''"
+              @click="handleRoleToggle(role.role_id, !isRoleSelected(role.role_id))"
+            >
+              <div
+                class="size-4 shrink-0 rounded-lg border shadow-xs flex items-center justify-center mt-0.5"
+                :class="isRoleSelected(role.role_id) ? 'border-primary bg-primary text-primary-foreground' : 'border-input'"
+              >
+                <Check v-if="isRoleSelected(role.role_id)" class="size-3.5" />
+              </div>
+              <div class="grid gap-1.5 font-normal flex-1">
+                <p class="text-sm leading-none font-medium capitalize">
+                  {{ role.name.replace(/_/g, ' ') }}
+                </p>
+                <p class="text-muted-foreground text-sm">
+                  {{ role.description }}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
