@@ -101,6 +101,12 @@ const router = createRouter({
           name: 'password-policy',
           component: () => import('@/views/system/PasswordPolicyView.vue'),
         },
+        // Profile
+        {
+          path: 'profile',
+          name: 'profile',
+          component: () => import('@/views/profile/ProfileView.vue'),
+        },
       ],
     },
 

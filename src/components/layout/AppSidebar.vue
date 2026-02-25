@@ -166,6 +166,10 @@ async function handleLogout() {
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="top" class="w-(--reka-dropdown-menu-trigger-width)">
+              <DropdownMenuItem @click="router.push({ name: 'profile' })" class="cursor-pointer">
+                <User2 class="size-4" />
+                Profile
+              </DropdownMenuItem>
               <DropdownMenuItem @click="handleLogout" class="text-destructive focus:text-destructive cursor-pointer">
                 <LogOut class="size-4" />
                 Sign out
