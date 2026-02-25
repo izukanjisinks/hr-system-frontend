@@ -19,6 +19,7 @@ import {
   User2,
   RotateCcw,
   Mail,
+  UserCog2Icon,
 } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -101,6 +102,7 @@ const navGroups = [
     items: [
       { title: 'Workflows', icon: GitBranch, routeName: 'workflows' },
       { title: 'Password Policy', icon: ShieldCheck, routeName: 'password-policy' },
+      { title: 'System Users', icon: UserCog2Icon, routeName: 'password-policy' },
       { title: 'Smtp', icon: Mail, routeName: 'workflows' },
     ],
   },
