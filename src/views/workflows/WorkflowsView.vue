@@ -211,7 +211,7 @@ onMounted(() => {
               <TableHead>Description</TableHead>
               <TableHead>States</TableHead>
               <TableHead>Transitions</TableHead>
-              <TableHead>Status</TableHead>
+              <!-- <TableHead>Status</TableHead> -->
               <TableHead>Created</TableHead>
               <TableHead class="text-right">Actions</TableHead>
             </TableRow>
@@ -227,7 +227,7 @@ onMounted(() => {
               <TableCell class="max-w-xs truncate">{{ workflow.description || '-' }}</TableCell>
               <TableCell>{{ workflow.stepCount ?? 0 }}</TableCell>
               <TableCell>{{ workflow.transitionCount ?? 0 }}</TableCell>
-              <TableCell>
+              <!-- <TableCell>
                 <div class="flex items-center gap-2">
                   <Switch
                     :checked="workflow.isActive"
@@ -237,7 +237,7 @@ onMounted(() => {
                     {{ workflow.isActive ? 'Active' : 'Inactive' }}
                   </Badge>
                 </div>
-              </TableCell>
+              </TableCell> -->
               <TableCell class="text-muted-foreground">{{ formatDate(workflow.createdAt) }}</TableCell>
               <TableCell class="text-right">
                 <div class="flex justify-end gap-2">
