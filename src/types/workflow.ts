@@ -1,8 +1,21 @@
+// Workflow Type
+export interface WorkflowType {
+  type: string
+  name: string
+  description: string
+}
+
+export interface GetWorkflowTypesResponse {
+  count: number
+  workflow_types: WorkflowType[]
+}
+
 // Backend workflow types
 export interface BackendWorkflow {
   id: string
   name: string
   description: string
+  workflow_type?: string
   is_active: boolean
   created_by: string
   created_at: string
@@ -93,6 +106,7 @@ export interface ProcessTaskActionResponse {
 export interface CreateWorkflowPayload {
   name: string
   description: string
+  workflow_type: string
 }
 
 export interface UpdateWorkflowPayload {

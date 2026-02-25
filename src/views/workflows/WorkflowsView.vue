@@ -2,6 +2,8 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWorkflowStore } from '@/stores/workflow'
+import { workflowApi } from '@/services/api/workflow'
+import type { WorkflowType } from '@/types/workflow'
 import {
   Card,
   CardContent,
@@ -31,16 +33,19 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Trash2, Eye } from 'lucide-vue-next'
 
 const router = useRouter()
 const workflowStore = useWorkflowStore()
 const dialogOpen = ref(false)
+const workflowTypes = ref<WorkflowType[]>([])
 
 // Form state
 const formData = ref({
   name: '',
   description: '',
+  workflow_type: '',
 })
 
 const formatDate = (dateString: string) => {
@@ -51,17 +56,27 @@ const formatDate = (dateString: string) => {
   })
 }
 
+async function fetchWorkflowTypes() {
+  try {
+    const response = await workflowApi.getWorkflowTypes()
+    workflowTypes.value = response.workflow_types
+  } catch (err) {
+    console.error('Failed to load workflow types:', err)
+  }
+}
+
 async function handleCreate() {
-  if (!formData.value.name.trim()) return
+  if (!formData.value.name.trim() || !formData.value.workflow_type) return
 
   try {
     const id = await workflowStore.createWorkflow(
       formData.value.name.trim(),
-      formData.value.description.trim()
+      formData.value.description.trim(),
+      formData.value.workflow_type
     )
 
     // Reset form
-    formData.value = { name: '', description: '' }
+    formData.value = { name: '', description: '', workflow_type: '' }
     dialogOpen.value = false
 
     // Navigate to the new workflow
@@ -95,6 +110,7 @@ function viewWorkflow(id: string) {
 
 onMounted(() => {
   workflowStore.fetchWorkflows()
+  fetchWorkflowTypes()
 })
 </script>
 
@@ -124,9 +140,27 @@ onMounted(() => {
           </DialogHeader>
 
           <div class="grid gap-4 py-4">
+            <!-- Workflow Type -->
+            <div class="grid gap-2">
+              <Label for="workflow-type">Workflow Type *</Label>
+              <Select v-model="formData.workflow_type">
+                <SelectTrigger class="w-full">
+                  <SelectValue placeholder="Select workflow type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="type in workflowTypes" :key="type.type" :value="type.type">
+                    {{ type.name }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p class="text-xs text-muted-foreground">
+                {{ workflowTypes.find(t => t.type === formData.workflow_type)?.description || 'Select a workflow type to see description' }}
+              </p>
+            </div>
+
             <!-- Name -->
             <div class="grid gap-2">
-              <Label for="workflow-name">Workflow Name</Label>
+              <Label for="workflow-name">Workflow Name *</Label>
               <input
                 id="workflow-name"
                 v-model="formData.name"
@@ -153,7 +187,7 @@ onMounted(() => {
             <Button variant="outline" @click="dialogOpen = false">
               Cancel
             </Button>
-            <Button @click="handleCreate" :disabled="!formData.name.trim()">
+            <Button @click="handleCreate" :disabled="!formData.name.trim() || !formData.workflow_type">
               Create Workflow
             </Button>
           </DialogFooter>
