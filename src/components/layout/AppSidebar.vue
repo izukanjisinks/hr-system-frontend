@@ -72,34 +72,35 @@ const navGroups = [
   {
     label: 'Payroll',
     items: [
-      // { title: 'Payroll Runs', icon: DollarSign, routeName: 'payroll' },
+       { title: 'Payroll Runs', icon: DollarSign, routeName: 'payroll' },
       { title: 'Payslips', icon: FileText, routeName: 'payslips' },
     ],
   },
-  {
-    label: 'Recruitment',
-    items: [
-      { title: 'Recruitment', icon: UserSearch, routeName: 'recruitment' },
-    ],
-  },
-  {
-    label: 'Performance',
-    items: [
-      { title: 'Performance', icon: TrendingUp, routeName: 'performance' },
-    ],
-  },
-  {
-    label: 'Password Management',
-    items: [
+  // {
+  //   label: 'Recruitment',
+  //   items: [
+  //     { title: 'Recruitment', icon: UserSearch, routeName: 'recruitment' },
+  //   ],
+  // },
+  // {
+  //   label: 'Performance',
+  //   items: [
+  //     { title: 'Performance', icon: TrendingUp, routeName: 'performance' },
+  //   ],
+  // },
+  // {
+  //   label: 'Password Management',
+  //   items: [
       
-      { title: 'Password Reset Requests', icon: RotateCcw, routeName: 'password-policy' },
-      { title: 'Password Policy', icon: ShieldCheck, routeName: 'password-policy' },
-    ],
-  },
+  //     { title: 'Password Reset Requests', icon: RotateCcw, routeName: 'password-reset-requests' },
+  //     { title: 'Password Policy', icon: ShieldCheck, routeName: 'password-policy' },
+  //   ],
+  // },
   {
-    label: 'System',
+    label: 'System Configuration',
     items: [
       { title: 'Workflows', icon: GitBranch, routeName: 'workflows' },
+      { title: 'Password Policy', icon: ShieldCheck, routeName: 'password-policy' },
       { title: 'Smtp', icon: Mail, routeName: 'workflows' },
     ],
   },
