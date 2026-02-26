@@ -10,7 +10,6 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card'
-import { Calendar } from '@/components/ui/calendar'
 import {
   CalendarDays,
   CalendarOff,
@@ -22,13 +21,12 @@ import {
   Shield,
 } from 'lucide-vue-next'
 import { Skeleton } from '@/components/ui/skeleton'
-import { today, getLocalTimeZone } from '@internationalized/date'
+import LeaveCalendar from '@/components/leave/LeaveCalendar.vue'
 
 const authStore = useAuthStore()
 const data = ref<DashboardData | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
-const selectedDate = ref(today(getLocalTimeZone()))
 
 const leaveStats = computed(() => {
   if (!data.value) return []
@@ -119,28 +117,16 @@ onMounted(() => {
 
     <!-- Bottom Section: Calendar + Employee Stats -->
     <div class="grid gap-4 lg:grid-cols-2">
-      <!-- Calendar Card with Holidays -->
+      <!-- Leave Calendar Card -->
       <Card>
         <CardHeader>
-          <CardTitle>Holidays This Month</CardTitle>
+          <CardTitle>Leave Calendar</CardTitle>
           <CardDescription>
-            {{ data?.holidays_this_month.total ?? 0 }} holiday{{ (data?.holidays_this_month.total ?? 0) === 1 ? '' : 's' }} in {{ new Date(selectedDate.year, selectedDate.month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) }}
+            View your approved and pending leave requests
           </CardDescription>
         </CardHeader>
-        <CardContent class="flex flex-col gap-4">
-          <Calendar v-model="selectedDate" />
-
-          <!-- Holidays List -->
-          <div v-if="holidaysThisMonth.length > 0" class="space-y-2 border-t pt-4">
-            <p class="text-sm font-medium">Upcoming Holidays</p>
-            <div v-for="holiday in holidaysThisMonth" :key="holiday.name" class="flex items-center justify-between text-sm">
-              <span class="text-foreground">{{ holiday.name }}</span>
-              <span class="text-muted-foreground">{{ new Date(holiday.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }}</span>
-            </div>
-          </div>
-          <p v-else class="text-sm text-muted-foreground border-t pt-4">
-            No holidays this month
-          </p>
+        <CardContent>
+          <LeaveCalendar />
         </CardContent>
       </Card>
 
