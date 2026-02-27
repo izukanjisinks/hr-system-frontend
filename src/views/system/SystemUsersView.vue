@@ -45,6 +45,9 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import ChangeRoleDialog from '@/components/users/ChangeRoleDialog.vue'
+import { useResultDialog } from '@/composables/useResultDialog'
+
+const { showSuccess, showError } = useResultDialog()
 
 const users = ref<SystemUser[]>([])
 const roles = ref<Role[]>([])
@@ -158,13 +161,21 @@ function openDeleteDialog(user: SystemUser) {
 }
 
 async function handleLockToggle(user: SystemUser) {
+  const isLocking = !user.is_locked
   confirmDialog.value.loading = true
   try {
-    await userApi.updateUser(user.user_id, { is_locked: !user.is_locked })
+    await userApi.updateUser(user.user_id, { is_locked: isLocking })
     await fetchUsers()
     confirmDialog.value.open = false
+    showSuccess(
+      isLocking ? 'Account Locked' : 'Account Unlocked',
+      isLocking
+        ? `${user.email} has been locked and can no longer access the system.`
+        : `${user.email} has been unlocked and can now access the system.`,
+    )
   } catch (err: any) {
-    error.value = err?.error?.message || 'Failed to update user'
+    confirmDialog.value.open = false
+    showError('Operation Failed', err?.error?.message || 'Failed to update user')
   } finally {
     confirmDialog.value.loading = false
   }
@@ -176,8 +187,10 @@ async function handleDelete(user: SystemUser) {
     await userApi.deleteUser(user.user_id)
     await fetchUsers()
     confirmDialog.value.open = false
+    showSuccess('User Deleted', `${user.email} has been permanently removed from the system.`)
   } catch (err: any) {
-    error.value = err?.error?.message || 'Failed to delete user'
+    confirmDialog.value.open = false
+    showError('Delete Failed', err?.error?.message || 'Failed to delete user')
   } finally {
     confirmDialog.value.loading = false
   }
@@ -191,9 +204,11 @@ function openChangeRoleDialog(user: SystemUser) {
 async function handleChangeRole(roleId: string, onError: (error: string) => void) {
   if (!selectedUser.value) return
   try {
-    await userApi.updateUser(selectedUser.value.user_id, { role_id: roleId })
+    await userApi.changeRole(selectedUser.value.user_id, roleId)
     await fetchUsers()
     changeRoleOpen.value = false
+    const roleName = roles.value.find(r => r.role_id === roleId)?.name?.replace(/_/g, ' ') || 'new role'
+    showSuccess('Role Updated', `${selectedUser.value.email} has been assigned the ${roleName} role.`)
   } catch (err: any) {
     onError(err?.error?.message || 'Failed to change role')
   }
@@ -221,11 +236,13 @@ async function handleResetPassword(user: SystemUser) {
   try {
     await userApi.resetPassword(user.user_id)
     await fetchUsers()
+    confirmDialog.value.open = false
+    showSuccess('Password Reset', `A new password has been generated and sent to ${user.email}.`)
   } catch (err: any) {
-    error.value = err?.error?.message || 'Failed to reset password'
+    confirmDialog.value.open = false
+    showError('Reset Failed', err?.error?.message || 'Failed to reset password')
   } finally {
     confirmDialog.value.loading = false
-    confirmDialog.value.open = false
   }
 }
 
@@ -349,10 +366,10 @@ onMounted(() => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
+                      <!-- <DropdownMenuItem>
                         <Edit class="size-4 mr-2" />
                         Edit User
-                      </DropdownMenuItem>
+                      </DropdownMenuItem> -->
                       <DropdownMenuItem @click="openChangeRoleDialog(user)">
                         <Shield class="size-4 mr-2" />
                         Change Role

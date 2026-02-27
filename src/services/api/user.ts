@@ -18,6 +18,10 @@ export const userApi = {
     return apiClient.delete(`/users/${userId}`)
   },
 
+  async changeRole(userId: string, roleId: string): Promise<SystemUser> {
+    return apiClient.patch<SystemUser>(`/users/${userId}/role`, { role_id: roleId })
+  },
+
   async resetPassword(userId: string): Promise<void> {
     return apiClient.post(`/auth/reset-password`, {
       "user_id": userId,
