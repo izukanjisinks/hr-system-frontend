@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, nextTick, onMounted } from 'vue'
 import { payrollApi } from '@/services/api/payroll'
 import type { Payslip } from '@/types/payroll'
 import { PDFViewer, PDFDownloadLink } from '@ceereals/vue-pdf'
@@ -12,11 +12,12 @@ import {
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { FileText, Download, DollarSign } from 'lucide-vue-next'
+import { FileText, Download, DollarSign, Loader2 } from 'lucide-vue-next'
 
 const payslips = ref<Payslip[]>([])
 const selectedPayslip = ref<Payslip | null>(null)
 const loading = ref(true)
+const pdfLoading = ref(false)
 const error = ref<string | null>(null)
 
 function formatCurrency(amount: number) {
@@ -32,7 +33,14 @@ function formatDate(dateStr: string) {
 }
 
 function selectPayslip(payslip: Payslip) {
+  if (payslip.id === selectedPayslip.value?.id) return
+  pdfLoading.value = true
   selectedPayslip.value = payslip
+  nextTick(() => {
+    setTimeout(() => {
+      pdfLoading.value = false
+    }, 800)
+  })
 }
 
 async function fetchPayslips() {
@@ -77,10 +85,10 @@ onMounted(() => {
     </div>
 
     <!-- Content -->
-    <div v-else class="flex gap-6 flex-1 min-h-0">
+    <div v-else class="flex gap-20 flex-1 min-h-0 justify-center">
       <!-- Left Panel: Payslip List -->
       <div class="w-80 shrink-0">
-        <Card>
+        <Card class="shadow-none h-full">
           <CardHeader class="pb-3">
             <CardTitle class="text-base">Pay History</CardTitle>
           </CardHeader>
@@ -117,7 +125,7 @@ onMounted(() => {
       </div>
 
       <!-- Right Panel: PDF Preview -->
-      <div class="flex-1 flex flex-col min-h-0">
+      <div class="flex flex-col min-h-0 w-full max-w-148.75">
         <div v-if="!selectedPayslip" class="flex-1 flex items-center justify-center border rounded-lg bg-muted/30">
           <div class="text-center">
             <FileText class="size-12 text-muted-foreground mx-auto mb-3" />
@@ -126,35 +134,44 @@ onMounted(() => {
         </div>
 
         <template v-else>
-          <!-- Toolbar -->
-          <div class="flex items-center justify-between mb-3">
-            <div>
-              <h2 class="text-lg font-semibold">{{ selectedPayslip.pay_period }}</h2>
-              <p class="text-sm text-muted-foreground">
-                Net Pay: {{ formatCurrency(selectedPayslip.net_pay) }}
-              </p>
-            </div>
-            <PDFDownloadLink :file-name="`Payslip-${selectedPayslip.pay_period.replace(/\s/g, '-')}.pdf`">
-              <template #default>
-                <PayslipDocument :payslip="selectedPayslip" />
-              </template>
-              <template #label>
-                <Button>
-                  <Download class="size-4 mr-2" />
-                  Download PDF
-                </Button>
-              </template>
-            </PDFDownloadLink>
-          </div>
-
           <!-- PDF Viewer -->
-          <div class="flex-1 border rounded-lg overflow-hidden min-h-150">
-            <PDFViewer :key="selectedPayslip.id" :show-toolbar="false" class="w-full h-full">
+          <div class="flex-1 border rounded-lg overflow-hidden min-h-150 relative bg-white">
+            <Transition name="fade">
+              <div v-if="pdfLoading" class="absolute inset-0 z-10 flex items-center justify-center bg-white">
+                <div class="flex flex-col items-center gap-2">
+                  <Loader2 class="size-8 animate-spin text-primary" />
+                  <p class="text-sm text-muted-foreground">Loading payslip...</p>
+                </div>
+              </div>
+            </Transition>
+            <PDFViewer :key="selectedPayslip.id" :show-toolbar="false" class="w-full h-full" :query-params="{ toolbar: 0, scrollbar: 0, navpanes: 0 }">
               <PayslipDocument :payslip="selectedPayslip" />
             </PDFViewer>
           </div>
+
+          <!-- Download Button -->
+          <PDFDownloadLink :file-name="`Payslip-${selectedPayslip.pay_period.replace(/\s/g, '-')}.pdf`">
+            <template #default>
+              <PayslipDocument :payslip="selectedPayslip" />
+            </template>
+            <template #label>
+              <Button variant="outline" class="w-full mt-3">
+                <Download class="size-4 mr-2" />
+                Download PDF
+              </Button>
+            </template>
+          </PDFDownloadLink>
         </template>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+:deep(iframe) {
+  background: white;
+  width: calc(100% + 26px) !important;
+  height: calc(100% + 16px) !important;
+  margin: -5px -20px -8px -7px;
+}
+</style>
