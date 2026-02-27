@@ -249,7 +249,7 @@ onMounted(() => {
     </div>
 
     <!-- Table -->
-    <div v-else class="rounded-lg border">
+    <div v-else class="rounded-lg border px-3 py-2">
       <Table>
         <TableHeader>
           <TableRow>

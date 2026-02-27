@@ -14,13 +14,6 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
@@ -30,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
+  ShieldCheck,
   UserPlus,
   Search,
   MoreVertical,
@@ -42,7 +36,6 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-vue-next'
-import { Skeleton } from '@/components/ui/skeleton'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import ChangeRoleDialog from '@/components/users/ChangeRoleDialog.vue'
 import { useResultDialog } from '@/composables/useResultDialog'
@@ -263,8 +256,11 @@ onMounted(() => {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-semibold">System Users</h1>
-        <p class="text-muted-foreground">
+        <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
+          <ShieldCheck class="w-8 h-8 text-primary" />
+          System Users
+        </h1>
+        <p class="text-muted-foreground mt-1">
           Manage user accounts and permissions
         </p>
       </div>
@@ -275,20 +271,19 @@ onMounted(() => {
     </div>
 
     <!-- Search and Filters -->
-    <Card>
-      <CardContent class="pt-6">
-        <div class="flex items-center gap-4">
-          <div class="relative flex-1 max-w-sm">
-            <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <Input
-              v-model="searchQuery"
-              placeholder="Search by email or role..."
-              class="pl-9"
-            />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div class="flex items-center gap-4">
+      <div class="relative flex-1 max-w-md">
+        <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+        <Input
+          v-model="searchQuery"
+          placeholder="Search by email or role..."
+          class="pl-9"
+        />
+      </div>
+      <div class="text-sm text-muted-foreground">
+        {{ filteredUsers.length }} {{ filteredUsers.length === 1 ? 'user' : 'users' }} total
+      </div>
+    </div>
 
     <!-- Error State -->
     <div v-if="error" class="rounded-lg bg-destructive/10 border border-destructive/20 p-4 flex items-start gap-3">
@@ -299,22 +294,14 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Users Table -->
-    <Card>
-      <CardHeader>
-        <CardTitle>All Users</CardTitle>
-        <CardDescription>
-          {{ filteredUsers.length }} {{ filteredUsers.length === 1 ? 'user' : 'users' }} in total
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <!-- Loading State -->
-        <div v-if="loading" class="space-y-3">
-          <Skeleton v-for="i in 5" :key="i" class="h-12 w-full" />
-        </div>
+    <!-- Loading State -->
+    <div v-if="loading" class="flex items-center justify-center py-12">
+      <Loader2 class="w-8 h-8 animate-spin text-muted-foreground" />
+    </div>
 
-        <!-- Table -->
-        <div v-else-if="filteredUsers.length > 0" class="border rounded-lg">
+    <!-- Users Table -->
+    <template v-else>
+      <div v-if="filteredUsers.length > 0" class="rounded-lg border px-3 py-2">
           <Table>
             <TableHeader>
               <TableRow>
@@ -395,18 +382,17 @@ onMounted(() => {
           </Table>
         </div>
 
-        <!-- Empty State -->
-        <div v-else class="text-center py-12">
-          <div class="size-12 rounded-full bg-muted mx-auto flex items-center justify-center mb-4">
-            <Search class="size-6 text-muted-foreground" />
-          </div>
-          <h3 class="text-lg font-medium mb-1">No users found</h3>
-          <p class="text-sm text-muted-foreground">
+      <!-- Empty State -->
+      <div v-else class="rounded-lg border border-dashed p-12">
+        <div class="flex flex-col items-center justify-center text-center">
+          <Search class="w-12 h-12 text-muted-foreground mb-4" />
+          <h3 class="text-lg font-semibold">No users found</h3>
+          <p class="text-sm text-muted-foreground mt-1">
             Try adjusting your search criteria
           </p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </template>
 
     <!-- Change Role Dialog -->
     <ChangeRoleDialog

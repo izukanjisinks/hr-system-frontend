@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, XCircle, Clock, Loader2 } from 'lucide-vue-next'
+import { ClipboardCheck, CheckCircle, XCircle, Clock, Loader2 } from 'lucide-vue-next'
 import TaskActionDialog from '@/components/approvals/TaskActionDialog.vue'
 
 const tasks = ref<WorkflowTask[]>([])
@@ -154,7 +154,10 @@ onMounted(() => {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold tracking-tight">My Approvals</h1>
+        <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
+          <ClipboardCheck class="w-8 h-8 text-primary" />
+          My Approvals
+        </h1>
         <p class="text-muted-foreground mt-1">
           Tasks assigned to you that are running through workflows
         </p>

@@ -5,13 +5,6 @@ import { useWorkflowStore } from '@/stores/workflow'
 import { workflowApi } from '@/services/api/workflow'
 import type { WorkflowType } from '@/types/workflow'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
   Table,
   TableBody,
   TableCell,
@@ -34,7 +27,7 @@ import {
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Trash2, Eye } from 'lucide-vue-next'
+import { GitBranch, Loader2, Plus, Trash2, Eye } from 'lucide-vue-next'
 
 const router = useRouter()
 const workflowStore = useWorkflowStore()
@@ -119,8 +112,11 @@ onMounted(() => {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-semibold">Workflows</h1>
-        <p class="text-muted-foreground">Manage HR process workflows</p>
+        <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
+          <GitBranch class="w-8 h-8 text-primary" />
+          Workflows
+        </h1>
+        <p class="text-muted-foreground mt-1">Manage HR process workflows</p>
       </div>
 
       <!-- New Workflow Dialog -->
@@ -195,16 +191,21 @@ onMounted(() => {
       </Dialog>
     </div>
 
-    <!-- Table Card -->
-    <Card>
-      <CardHeader>
-        <CardTitle>All Workflows</CardTitle>
-        <CardDescription>
-          {{ workflowStore.workflows.length }} workflow{{ workflowStore.workflows.length === 1 ? '' : 's' }}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Table>
+    <!-- Count & Loading -->
+    <div class="flex items-center gap-4">
+      <div class="text-sm text-muted-foreground">
+        {{ workflowStore.workflows.length }} workflow{{ workflowStore.workflows.length === 1 ? '' : 's' }} total
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="workflowStore.loading" class="flex items-center justify-center py-12">
+      <Loader2 class="w-8 h-8 animate-spin text-muted-foreground" />
+    </div>
+
+    <!-- Table -->
+    <div v-else class="rounded-lg border px-3 py-2">
+      <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
@@ -260,7 +261,6 @@ onMounted(() => {
             </TableRow>
           </TableBody>
         </Table>
-      </CardContent>
-    </Card>
+    </div>
   </div>
 </template>
