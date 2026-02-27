@@ -1,9 +1,9 @@
 import { apiClient } from './client'
-import type { SystemUser, CreateUserPayload, UpdateUserPayload } from '@/types/user'
+import type { SystemUser, UsersResponse, CreateUserPayload, UpdateUserPayload } from '@/types/user'
 
 export const userApi = {
-  async getUsers(): Promise<SystemUser[]> {
-    return apiClient.get<SystemUser[]>('/users')
+  async getUsers(): Promise<UsersResponse> {
+    return apiClient.get<UsersResponse>('/users')
   },
 
   async createUser(payload: CreateUserPayload): Promise<SystemUser> {
@@ -18,7 +18,9 @@ export const userApi = {
     return apiClient.delete(`/users/${userId}`)
   },
 
-  async resetPassword(userId: string, newPassword: string): Promise<void> {
-    return apiClient.post(`/users/${userId}/reset-password`, { new_password: newPassword })
+  async resetPassword(userId: string): Promise<void> {
+    return apiClient.post(`/auth/reset-password`, {
+      "user_id": userId,
+    })
   },
 }

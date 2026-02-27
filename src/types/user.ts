@@ -25,6 +25,13 @@ export interface CreateUserPayload {
   is_active?: boolean
 }
 
+export interface UsersResponse {
+  data: SystemUser[]
+  page: number
+  page_size: number
+  total: number
+}
+
 export interface UpdateUserPayload {
   email?: string
   role_id?: string

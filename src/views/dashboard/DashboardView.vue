@@ -44,9 +44,9 @@ const leaveStats = computed(() => {
       icon: CalendarCheck,
     },
     {
-      title: 'Pending Requests',
+      title: 'Total Leave Requests',
       value: data.value.leave_requests,
-      description: 'Awaiting approval',
+      description: 'Total leave requests submitted',
       icon: CalendarOff,
     },
   ]

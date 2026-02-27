@@ -44,6 +44,7 @@ import {
 } from 'lucide-vue-next'
 import { Skeleton } from '@/components/ui/skeleton'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import ChangeRoleDialog from '@/components/users/ChangeRoleDialog.vue'
 
 const users = ref<SystemUser[]>([])
 const roles = ref<Role[]>([])
@@ -64,6 +65,7 @@ const confirmDialog = ref({
 })
 
 const selectedUser = ref<SystemUser | null>(null)
+const changeRoleOpen = ref(false)
 
 const filteredUsers = computed(() => {
   if (!searchQuery.value) return users.value
@@ -79,8 +81,10 @@ async function fetchUsers() {
   loading.value = true
   error.value = null
   try {
-    users.value = await userApi.getUsers()
+    const response = await userApi.getUsers()
+    users.value = response.data
   } catch (err: any) {
+    console.error('fetchUsers error:', err)
     error.value = err?.error?.message || 'Failed to load users'
   } finally {
     loading.value = false
@@ -176,6 +180,52 @@ async function handleDelete(user: SystemUser) {
     error.value = err?.error?.message || 'Failed to delete user'
   } finally {
     confirmDialog.value.loading = false
+  }
+}
+
+function openChangeRoleDialog(user: SystemUser) {
+  selectedUser.value = user
+  changeRoleOpen.value = true
+}
+
+async function handleChangeRole(roleId: string, onError: (error: string) => void) {
+  if (!selectedUser.value) return
+  try {
+    await userApi.updateUser(selectedUser.value.user_id, { role_id: roleId })
+    await fetchUsers()
+    changeRoleOpen.value = false
+  } catch (err: any) {
+    onError(err?.error?.message || 'Failed to change role')
+  }
+}
+
+function openResetPasswordDialog(user: SystemUser) {
+  selectedUser.value = user
+
+  confirmDialog.value = {
+    open: true,
+    title: 'Reset Password',
+    description: `This action will generate a new password for ${user.email} and send it to their email address. The user will be required to change their password on next login.`,
+    variant: 'default',
+    confirmText: 'Reset Password',
+    icon: KeyRound,
+    action: async () => {
+      await handleResetPassword(user)
+    },
+    loading: false,
+  }
+}
+
+async function handleResetPassword(user: SystemUser) {
+  confirmDialog.value.loading = true
+  try {
+    await userApi.resetPassword(user.user_id)
+    await fetchUsers()
+  } catch (err: any) {
+    error.value = err?.error?.message || 'Failed to reset password'
+  } finally {
+    confirmDialog.value.loading = false
+    confirmDialog.value.open = false
   }
 }
 
@@ -303,11 +353,11 @@ onMounted(() => {
                         <Edit class="size-4 mr-2" />
                         Edit User
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem @click="openChangeRoleDialog(user)">
                         <Shield class="size-4 mr-2" />
                         Change Role
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem @click="openResetPasswordDialog(user)">
                         <KeyRound class="size-4 mr-2" />
                         Reset Password
                       </DropdownMenuItem>
@@ -340,6 +390,15 @@ onMounted(() => {
         </div>
       </CardContent>
     </Card>
+
+    <!-- Change Role Dialog -->
+    <ChangeRoleDialog
+      :open="changeRoleOpen"
+      @update:open="(val) => changeRoleOpen = val"
+      :user="selectedUser"
+      :roles="roles"
+      @save="handleChangeRole"
+    />
 
     <!-- Confirmation Dialog -->
     <ConfirmDialog
