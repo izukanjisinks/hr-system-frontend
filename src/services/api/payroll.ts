@@ -1,6 +1,46 @@
-import type { Payslip } from '@/types/payroll'
+import type { Payslip, PayrollPeriod, GetPayrollPeriodsResponse } from '@/types/payroll'
 
-// Mock data until backend API is ready
+// Mock payroll periods
+const mockPayrollPeriods: PayrollPeriod[] = [
+  {
+    id: 'pp-1',
+    start_date: '2026-02-01',
+    end_date: '2026-02-28',
+    status: 'OPEN',
+    processed_by: null,
+    processed_by_name: null,
+    created_at: '2026-02-01T08:00:00Z',
+  },
+  {
+    id: 'pp-2',
+    start_date: '2026-01-01',
+    end_date: '2026-01-31',
+    status: 'CLOSED',
+    processed_by: 'u-1',
+    processed_by_name: 'Jane Smith',
+    created_at: '2026-01-01T08:00:00Z',
+  },
+  {
+    id: 'pp-3',
+    start_date: '2025-12-01',
+    end_date: '2025-12-31',
+    status: 'CLOSED',
+    processed_by: 'u-1',
+    processed_by_name: 'Jane Smith',
+    created_at: '2025-12-01T08:00:00Z',
+  },
+  {
+    id: 'pp-4',
+    start_date: '2025-11-01',
+    end_date: '2025-11-30',
+    status: 'CLOSED',
+    processed_by: 'u-2',
+    processed_by_name: 'John Doe',
+    created_at: '2025-11-01T08:00:00Z',
+  },
+]
+
+// Mock payslips
 const mockPayslips: Payslip[] = [
   {
     id: '1',
@@ -81,6 +121,30 @@ const mockPayslips: Payslip[] = [
 ]
 
 export const payrollApi = {
+  async getPayrollPeriods(params?: {
+    page?: number
+    page_size?: number
+  }): Promise<GetPayrollPeriodsResponse> {
+    // TODO: Replace with actual API call
+    // return apiClient.get('/hr/payroll-periods', { params })
+    return new Promise((resolve) => {
+      setTimeout(() => resolve({
+        data: mockPayrollPeriods,
+        page: params?.page || 1,
+        page_size: params?.page_size || 10,
+        total: mockPayrollPeriods.length,
+      }), 500)
+    })
+  },
+
+  async runPayroll(periodId: string): Promise<void> {
+    // TODO: Replace with actual API call
+    // return apiClient.post(`/hr/payroll-periods/${periodId}/run`)
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(), 1000)
+    })
+  },
+
   async getMyPayslips(): Promise<Payslip[]> {
     // TODO: Replace with actual API call
     // return apiClient.get<Payslip[]>('/hr/payslips/me')

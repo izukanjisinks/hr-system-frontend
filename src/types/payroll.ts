@@ -1,3 +1,20 @@
+export interface PayrollPeriod {
+  id: string
+  start_date: string
+  end_date: string
+  status: 'OPEN' | 'PROCESSING' | 'CLOSED'
+  processed_by: string | null
+  processed_by_name: string | null
+  created_at: string
+}
+
+export interface GetPayrollPeriodsResponse {
+  data: PayrollPeriod[]
+  page: number
+  page_size: number
+  total: number
+}
+
 export interface PayslipLineItem {
   name: string
   amount: number
