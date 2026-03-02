@@ -7,6 +7,12 @@ export const leaveApi = {
     return apiClient.get<LeaveRequestsResponse>(`/hr/leave-requests/me${params}`)
   },
 
+  getAllLeaveRequests(params?: {
+    status?: 'pending' | 'approved' | 'rejected' | 'cancelled'
+  }): Promise<LeaveRequestsResponse> {
+    return apiClient.get<LeaveRequestsResponse>('/hr/leave-requests', { params })
+  },
+
   getLeaveTypes(): Promise<LeaveType[]> {
     return apiClient.get<LeaveType[]>('/hr/leave-types')
   },

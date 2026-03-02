@@ -13,9 +13,11 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Loader2, Briefcase, AlertCircle, Check } from 'lucide-vue-next'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Loader2, Briefcase, AlertCircle, Check, Calculator } from 'lucide-vue-next'
 import type { Position, CreatePositionPayload, UpdatePositionPayload } from '@/services/api/position'
 import type { Role } from '@/types/role'
+import { calculateSalaryBreakdown } from '@/lib/salary'
 
 const props = defineProps<{
   open: boolean
@@ -38,13 +40,20 @@ const formData = ref({
   department_id: '',
   role_id: '',
   grade_level: '',
-  min_salary: 0,
-  max_salary: 0,
+  base_salary: 0,
   description: '',
 })
 
 const isEditMode = computed(() => props.position !== null)
 const dialogTitle = computed(() => isEditMode.value ? 'Edit Position' : 'Add New Position')
+
+const salaryBreakdown = computed(() => {
+  return calculateSalaryBreakdown(formData.value.base_salary || 0)
+})
+
+function formatCurrency(amount: number) {
+  return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
 
 // Watch for dialog open/close and position changes
 watch([() => props.open, () => props.position], ([isOpen, position]) => {
@@ -59,8 +68,7 @@ watch([() => props.open, () => props.position], ([isOpen, position]) => {
       department_id: position.department_id,
       role_id: position.role_id || '',
       grade_level: position.grade_level,
-      min_salary: position.min_salary,
-      max_salary: position.max_salary,
+      base_salary: position.base_salary,
       description: position.description || '',
     }
   } else {
@@ -75,36 +83,25 @@ function resetForm() {
     department_id: '',
     role_id: '',
     grade_level: '',
-    min_salary: 0,
-    max_salary: 0,
+    base_salary: 0,
     description: '',
   }
 }
 
 function handleRoleToggle(roleId: string, checked: boolean | string) {
-  console.log('handleRoleToggle called:', { roleId, checked, currentSelection: formData.value.role_id })
   const isChecked = Boolean(checked)
-
   if (isChecked) {
-    // Radio behavior: set only this role, clearing others
-    console.log('Setting role to:', roleId)
     formData.value.role_id = roleId
   } else {
-    // If unchecking the currently selected role, clear it
     if (formData.value.role_id === roleId) {
-      console.log('Clearing role')
       formData.value.role_id = ''
     }
   }
-  console.log('After toggle, role_id is:', formData.value.role_id)
 }
 
 function isRoleSelected(roleId: string): boolean {
-  const selected = formData.value.role_id === roleId
-  console.log('isRoleSelected:', { roleId, currentRoleId: formData.value.role_id, selected })
-  return selected
+  return formData.value.role_id === roleId
 }
-
 
 async function handleSave() {
   saving.value = true
@@ -113,14 +110,10 @@ async function handleSave() {
   try {
     const payload: any = { ...formData.value }
 
-    // Convert salary numbers to strings for API
-    payload.min_salary = String(payload.min_salary)
-    payload.max_salary = String(payload.max_salary)
+    payload.base_salary = Number(payload.base_salary)
 
     // Clean up empty optional fields
     if (!payload.description) delete payload.description
-
-    console.log('Position Dialog Payload:', JSON.stringify(payload, null, 2))
 
     emit('save', payload, (error: string) => {
       errorMessage.value = error
@@ -193,16 +186,27 @@ function handleClose() {
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <div class="grid gap-2">
-            <Label for="min_salary">Minimum Salary *</Label>
-            <Input id="min_salary" v-model.number="formData.min_salary" type="number" required placeholder="60000" />
-          </div>
-          <div class="grid gap-2">
-            <Label for="max_salary">Maximum Salary *</Label>
-            <Input id="max_salary" v-model.number="formData.max_salary" type="number" required placeholder="100000" />
-          </div>
+        <div class="grid gap-2">
+          <Label for="base_salary">Base Salary *</Label>
+          <Input id="base_salary" v-model.number="formData.base_salary" type="number" required placeholder="10000" />
         </div>
+
+        <!-- Salary Breakdown Alert -->
+        <Alert>
+          <Calculator class="size-4" />
+          <AlertTitle>Salary Breakdown</AlertTitle>
+          <AlertDescription>
+            <ul class="mt-2 list-inside list-disc space-y-1">
+              <li>Base Salary: <span class="font-medium">{{ formatCurrency(salaryBreakdown.baseSalary) }}</span></li>
+              <li>Housing Allowance (20%): <span class="font-medium">{{ formatCurrency(salaryBreakdown.housingAllowance) }}</span></li>
+              <li>Transport Allowance (10%): <span class="font-medium">{{ formatCurrency(salaryBreakdown.transportAllowance) }}</span></li>
+              <li>Medical Allowance (8%): <span class="font-medium">{{ formatCurrency(salaryBreakdown.medicalAllowance) }}</span></li>
+              <li>Gross Salary: <span class="font-medium">{{ formatCurrency(salaryBreakdown.grossSalary) }}</span></li>
+              <li>Income Tax (PAYE): <span class="font-medium text-destructive">-{{ formatCurrency(salaryBreakdown.incomeTax) }}</span></li>
+              <li class="font-semibold">Net Salary: <span>{{ formatCurrency(salaryBreakdown.netSalary) }}</span></li>
+            </ul>
+          </AlertDescription>
+        </Alert>
 
         <div class="grid gap-2">
           <Label for="description">Description</Label>

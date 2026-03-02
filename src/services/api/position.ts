@@ -6,11 +6,10 @@ export interface Position {
   code: string
   description: string
   department_id: string
+  role_id: string
   grade_level: string
-  min_salary: number
-  max_salary: number
+  base_salary: number
   is_active: boolean
-  allowed_roles?: string[]
   created_at: string
   updated_at: string
 }
@@ -26,22 +25,20 @@ export interface CreatePositionPayload {
   title: string
   code: string
   department_id: string
+  role_id: string
   grade_level: string
-  min_salary: number
-  max_salary: number
+  base_salary: number
   description?: string
-  allowed_roles?: string[]
 }
 
 export interface UpdatePositionPayload {
   title?: string
   code?: string
   department_id?: string
+  role_id?: string
   grade_level?: string
-  min_salary?: number
-  max_salary?: number
+  base_salary?: number
   description?: string
-  allowed_roles?: string[]
 }
 
 export const positionApi = {

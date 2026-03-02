@@ -1,11 +1,33 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Document, Page, View, Text } from '@ceereals/vue-pdf'
 import type { Payslip } from '@/types/payroll'
 import type { Style } from '@ceereals/vue-pdf'
 
-defineProps<{
+const props = defineProps<{
   payslip: Payslip
 }>()
+
+const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+const payPeriod = computed(() => `${monthNames[props.payslip.month - 1]} ${props.payslip.year}`)
+
+const earnings = computed(() => {
+  const items: { name: string; amount: number }[] = []
+  if (props.payslip.base_salary) items.push({ name: 'Basic Salary', amount: props.payslip.base_salary })
+  if (props.payslip.housing_allowance) items.push({ name: 'Housing Allowance', amount: props.payslip.housing_allowance })
+  if (props.payslip.transport_allowance) items.push({ name: 'Transport Allowance', amount: props.payslip.transport_allowance })
+  if (props.payslip.medical_allowance) items.push({ name: 'Medical Allowance', amount: props.payslip.medical_allowance })
+  return items
+})
+
+const deductions = computed(() => {
+  const items: { name: string; amount: number }[] = []
+  if (props.payslip.income_tax) items.push({ name: 'Income Tax (PAYE)', amount: props.payslip.income_tax })
+  return items
+})
+
+const totalDeductions = computed(() => deductions.value.reduce((sum, d) => sum + d.amount, 0))
 
 function formatCurrency(amount: number) {
   return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -169,7 +191,7 @@ const styles = {
 </script>
 
 <template>
-  <Document :title="`Payslip - ${payslip.pay_period}`">
+  <Document :title="`Payslip - ${payPeriod}`">
     <Page size="A4" :style="styles.page">
       <!-- Header -->
       <View :style="styles.header">
@@ -178,7 +200,7 @@ const styles = {
         </View>
         <View>
           <Text :style="styles.payslipTitle">PAYSLIP</Text>
-          <Text :style="styles.payPeriod">{{ payslip.pay_period }}</Text>
+          <Text :style="styles.payPeriod">{{ payPeriod }}</Text>
         </View>
       </View>
 
@@ -187,18 +209,14 @@ const styles = {
         <View :style="styles.employeeCol">
           <Text :style="styles.label">Employee Name</Text>
           <Text :style="styles.value">{{ payslip.employee_name }}</Text>
-          <Text :style="styles.label">Employee Number</Text>
-          <Text :style="styles.value">{{ payslip.employee_number }}</Text>
         </View>
         <View :style="styles.employeeCol">
-          <Text :style="styles.label">Department</Text>
-          <Text :style="styles.value">{{ payslip.department }}</Text>
           <Text :style="styles.label">Position</Text>
-          <Text :style="styles.value">{{ payslip.position }}</Text>
+          <Text :style="styles.value">{{ payslip.position_name }}</Text>
         </View>
         <View :style="styles.employeeCol">
-          <Text :style="styles.label">Pay Date</Text>
-          <Text :style="styles.value">{{ new Date(payslip.pay_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</Text>
+          <Text :style="styles.label">Pay Period</Text>
+          <Text :style="styles.value">{{ payPeriod }}</Text>
         </View>
       </View>
 
@@ -208,7 +226,7 @@ const styles = {
         <Text :style="[styles.tableHeaderText, styles.itemName]">Description</Text>
         <Text :style="[styles.tableHeaderText, styles.itemAmount]">Amount</Text>
       </View>
-      <View v-for="(item, index) in payslip.earnings" :key="index" :style="styles.tableRow">
+      <View v-for="(item, index) in earnings" :key="index" :style="styles.tableRow">
         <Text :style="styles.itemName">{{ item.name }}</Text>
         <Text :style="styles.itemAmount">{{ formatCurrency(item.amount) }}</Text>
       </View>
@@ -219,7 +237,7 @@ const styles = {
         <Text :style="[styles.tableHeaderText, styles.itemName]">Description</Text>
         <Text :style="[styles.tableHeaderText, styles.itemAmount]">Amount</Text>
       </View>
-      <View v-for="(item, index) in payslip.deductions" :key="index" :style="styles.tableRow">
+      <View v-for="(item, index) in deductions" :key="index" :style="styles.tableRow">
         <Text :style="styles.itemName">{{ item.name }}</Text>
         <Text :style="styles.itemAmount">{{ formatCurrency(item.amount) }}</Text>
       </View>
@@ -228,15 +246,15 @@ const styles = {
       <View :style="styles.summarySection">
         <View :style="styles.summaryRow">
           <Text :style="styles.summaryLabel">Gross Pay</Text>
-          <Text :style="styles.summaryValue">{{ formatCurrency(payslip.gross_pay) }}</Text>
+          <Text :style="styles.summaryValue">{{ formatCurrency(payslip.gross_salary) }}</Text>
         </View>
         <View :style="styles.summaryRow">
           <Text :style="styles.summaryLabel">Total Deductions</Text>
-          <Text :style="styles.summaryValue">-{{ formatCurrency(payslip.total_deductions) }}</Text>
+          <Text :style="styles.summaryValue">-{{ formatCurrency(totalDeductions) }}</Text>
         </View>
         <View :style="styles.netPayRow">
           <Text :style="styles.netPayLabel">Net Pay</Text>
-          <Text :style="styles.netPayValue">{{ formatCurrency(payslip.net_pay) }}</Text>
+          <Text :style="styles.netPayValue">{{ formatCurrency(payslip.net_salary) }}</Text>
         </View>
       </View>
 

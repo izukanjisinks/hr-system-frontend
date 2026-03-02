@@ -20,16 +20,14 @@ const loading = ref(true)
 const pdfLoading = ref(false)
 const error = ref<string | null>(null)
 
-function formatCurrency(amount: number) {
-  return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+function formatPeriod(payslip: Payslip) {
+  return `${monthNames[payslip.month - 1]} ${payslip.year}`
 }
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+function formatCurrency(amount: number) {
+  return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 function selectPayslip(payslip: Payslip) {
@@ -47,7 +45,8 @@ async function fetchPayslips() {
   loading.value = true
   error.value = null
   try {
-    payslips.value = await payrollApi.getMyPayslips()
+    const response = await payrollApi.getMyPayslips()
+    payslips.value = response.data
     if (payslips.value.length > 0) {
       selectedPayslip.value = payslips.value[0]
     }
@@ -112,11 +111,11 @@ onMounted(() => {
                   <DollarSign class="size-4 text-primary" />
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium truncate">{{ payslip.pay_period }}</p>
-                  <p class="text-xs text-muted-foreground">{{ formatDate(payslip.pay_date) }}</p>
+                  <p class="text-sm font-medium truncate">{{ formatPeriod(payslip) }}</p>
+                  <p class="text-xs text-muted-foreground">{{ payslip.position_name }}</p>
                 </div>
                 <p class="text-sm font-semibold tabular-nums">
-                  {{ formatCurrency(payslip.net_pay) }}
+                  {{ formatCurrency(payslip.net_salary) }}
                 </p>
               </div>
             </div>
@@ -150,7 +149,7 @@ onMounted(() => {
           </div>
 
           <!-- Download Button -->
-          <PDFDownloadLink :file-name="`Payslip-${selectedPayslip.pay_period.replace(/\s/g, '-')}.pdf`">
+          <PDFDownloadLink :file-name="`Payslip-${formatPeriod(selectedPayslip).replace(/\\s/g, '-')}.pdf`">
             <template #default>
               <PayslipDocument :payslip="selectedPayslip" />
             </template>

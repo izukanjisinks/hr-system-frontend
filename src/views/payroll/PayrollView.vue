@@ -64,7 +64,7 @@ function getStatusVariant(status: string) {
       return 'outline'
     case 'PROCESSING':
       return 'secondary'
-    case 'CLOSED':
+    case 'COMPLETED':
       return 'default'
     default:
       return 'secondary'

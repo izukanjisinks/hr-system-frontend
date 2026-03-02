@@ -257,7 +257,7 @@ onMounted(() => {
             <TableHead>Title</TableHead>
             <TableHead>Department</TableHead>
             <TableHead>Grade Level</TableHead>
-            <TableHead>Salary Range</TableHead>
+            <TableHead>Base Salary</TableHead>
             <TableHead>Status</TableHead>
             <TableHead class="text-right">Actions</TableHead>
           </TableRow>
@@ -284,7 +284,7 @@ onMounted(() => {
             </TableCell>
             <TableCell>
               <div class="text-sm">
-                {{ formatCurrency(position.min_salary) }} - {{ formatCurrency(position.max_salary) }}
+                {{ formatCurrency(position.base_salary) }}
               </div>
             </TableCell>
             <TableCell>
