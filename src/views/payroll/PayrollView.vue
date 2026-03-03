@@ -13,9 +13,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import ResultDialog from '@/components/common/ResultDialog.vue'
 import Pagination from '@/components/common/Pagination.vue'
-import { Wallet, Search, Loader2, Play } from 'lucide-vue-next'
+import { Wallet, Search, Loader2, Play, Plus, CalendarDays } from 'lucide-vue-next'
 
 const periods = ref<PayrollPeriod[]>([])
 const loading = ref(false)
@@ -24,6 +33,10 @@ const page = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 
+// Create dialog
+const createDialogOpen = ref(false)
+const creating = ref(false)
+
 // Result dialog
 const resultDialog = ref({
   open: false,
@@ -31,6 +44,15 @@ const resultDialog = ref({
   title: '',
   message: '',
 })
+
+// Current month dates
+const now = new Date()
+const currentMonthLabel = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
+const currentYear = now.getFullYear()
+const currentMonth = now.getMonth()
+const startDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`
+const lastDay = new Date(currentYear, currentMonth + 1, 0).getDate()
+const endDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
 
 // Computed
 const filteredPeriods = computed(() => {
@@ -43,6 +65,13 @@ const filteredPeriods = computed(() => {
       p.processed_by_name?.toLowerCase().includes(query) ||
       formatPeriod(p.start_date, p.end_date).toLowerCase().includes(query)
   )
+})
+
+const currentMonthExists = computed(() => {
+  return periods.value.some((p) => {
+    const pStart = new Date(p.start_date)
+    return pStart.getFullYear() === currentYear && pStart.getMonth() === currentMonth
+  })
 })
 
 function formatDate(dateStr: string) {
@@ -90,6 +119,31 @@ async function loadPeriods() {
     }
   } finally {
     loading.value = false
+  }
+}
+
+async function handleCreatePayroll() {
+  creating.value = true
+  try {
+    await payrollApi.createPayrollPeriod({ start_date: startDate, end_date: endDate })
+    createDialogOpen.value = false
+    resultDialog.value = {
+      open: true,
+      type: 'success',
+      title: 'Payroll Created',
+      message: `Payroll period for ${currentMonthLabel} has been created successfully.`,
+    }
+    await loadPeriods()
+  } catch (err: any) {
+    console.error('Failed to create payroll:', err)
+    resultDialog.value = {
+      open: true,
+      type: 'error',
+      title: 'Failed to Create Payroll',
+      message: err?.error?.message || 'Unable to create payroll period. Please try again.',
+    }
+  } finally {
+    creating.value = false
   }
 }
 
@@ -141,6 +195,10 @@ onMounted(() => {
           Manage payroll periods and processing
         </p>
       </div>
+      <Button @click="createDialogOpen = true" size="lg" :disabled="currentMonthExists">
+        <Plus class="w-4 h-4 mr-2" />
+        Create Payroll
+      </Button>
     </div>
 
     <!-- Search and Filters -->
@@ -225,6 +283,42 @@ onMounted(() => {
         @update:page="(newPage) => (page = newPage)"
       />
     </div>
+
+    <!-- Create Payroll Dialog -->
+    <Dialog :open="createDialogOpen" @update:open="(val) => (createDialogOpen = val)">
+      <DialogContent class="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle class="flex items-center gap-2">
+            <Wallet class="w-5 h-5" />
+            Create Payroll Period
+          </DialogTitle>
+          <DialogDescription>
+            Create a new payroll period for the current month.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Alert>
+          <CalendarDays class="size-4" />
+          <AlertTitle>{{ currentMonthLabel }}</AlertTitle>
+          <AlertDescription>
+            <ul class="mt-2 list-inside list-disc space-y-1">
+              <li>Start Date: <span class="font-medium">{{ formatDate(startDate) }}</span></li>
+              <li>End Date: <span class="font-medium">{{ formatDate(endDate) }}</span></li>
+            </ul>
+          </AlertDescription>
+        </Alert>
+
+        <DialogFooter>
+          <Button variant="outline" @click="createDialogOpen = false" :disabled="creating">
+            Cancel
+          </Button>
+          <Button @click="handleCreatePayroll" :disabled="creating">
+            <Loader2 v-if="creating" class="w-4 h-4 mr-2 animate-spin" />
+            Create Payroll
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <!-- Result Dialog -->
     <ResultDialog
