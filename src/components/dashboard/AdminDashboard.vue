@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { dashboardApi } from '@/services/api/dashboard'
 import type { AdminDashboardData, HiringTrend } from '@/types/dashboard'
@@ -12,13 +12,6 @@ import {
   CardDescription,
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {
   ChartContainer,
   ChartCrosshair,
@@ -38,22 +31,6 @@ const authStore = useAuthStore()
 const data = ref<AdminDashboardData | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
-const timeRange = ref('12m')
-
-function getDateRange(range: string): { from: string; to: string } {
-  const to = new Date()
-  const from = new Date()
-  switch (range) {
-    case '3m': from.setMonth(from.getMonth() - 3); break
-    case '6m': from.setMonth(from.getMonth() - 6); break
-    case '12m': from.setFullYear(from.getFullYear() - 1); break
-    default: from.setFullYear(from.getFullYear() - 1)
-  }
-  return {
-    from: from.toISOString().slice(0, 10),
-    to: to.toISOString().slice(0, 10),
-  }
-}
 
 const statCards = [
   { key: 'total_employees', title: 'Total Employees', icon: Users, description: 'Active employees' },
@@ -152,8 +129,13 @@ async function fetchDashboard() {
   loading.value = true
   error.value = null
   try {
-    const params = getDateRange(timeRange.value)
-    data.value = await dashboardApi.getAdminDashboard(params)
+    const to = new Date()
+    const from = new Date()
+    from.setFullYear(from.getFullYear() - 1)
+    data.value = await dashboardApi.getAdminDashboard({
+      from: from.toISOString().slice(0, 10),
+      to: to.toISOString().slice(0, 10),
+    })
   } catch (err) {
     console.error('Failed to load admin dashboard:', err)
     error.value = `Failed to load dashboard data: ${(err as any)?.error?.message || (err as Error)?.message || 'Unknown error'}`
@@ -161,10 +143,6 @@ async function fetchDashboard() {
     loading.value = false
   }
 }
-
-watch(timeRange, () => {
-  fetchDashboard()
-})
 
 onMounted(() => {
   fetchDashboard()
@@ -290,16 +268,6 @@ onMounted(() => {
             <CardTitle>Hiring Trend</CardTitle>
             <CardDescription>New hires per month</CardDescription>
           </div>
-          <Select v-model="timeRange">
-            <SelectTrigger class="w-40 rounded-lg" aria-label="Select time range">
-              <SelectValue placeholder="Last 12 months" />
-            </SelectTrigger>
-            <SelectContent class="rounded-xl">
-              <SelectItem value="3m" class="rounded-lg">Last 3 months</SelectItem>
-              <SelectItem value="6m" class="rounded-lg">Last 6 months</SelectItem>
-              <SelectItem value="12m" class="rounded-lg">Last 12 months</SelectItem>
-            </SelectContent>
-          </Select>
         </CardHeader>
         <CardContent class="px-2 pt-4 sm:px-6 sm:pt-6 pb-4">
           <ChartContainer :config="hiringChartConfig" class="aspect-auto h-50 w-full" :cursor="false">
