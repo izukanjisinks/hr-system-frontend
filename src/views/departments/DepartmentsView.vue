@@ -255,14 +255,14 @@ onMounted(() => {
               </div>
             </TableCell>
             <TableCell>
-              <span v-if="department.parent_department_id" class="text-sm">
-                {{ department.parent_department_id }}
+              <span v-if="department.parent_department_name" class="text-sm">
+                {{ department.parent_department_name }}
               </span>
               <span v-else class="text-sm text-muted-foreground">-</span>
             </TableCell>
             <TableCell>
-              <span v-if="department.manager_id" class="text-sm">
-                {{ department.manager_id }}
+              <span v-if="department.manager_name" class="text-sm">
+                {{ department.manager_name }}
               </span>
               <span v-else class="text-sm text-muted-foreground">-</span>
             </TableCell>

@@ -310,9 +310,9 @@ onMounted(() => {
             <TableCell>{{ employee.email }}</TableCell>
             <TableCell>{{ employee.phone }}</TableCell>
             <TableCell>
-              <Badge variant="outline">{{ employee.department_id }}</Badge>
+              <Badge variant="outline">{{ employee.department_name || employee.department_id }}</Badge>
             </TableCell>
-            <TableCell>{{ employee.position_id }}</TableCell>
+            <TableCell>{{ employee.position_name || employee.position_id }}</TableCell>
             <TableCell>
               <Badge variant="secondary">
                 {{ getEmploymentTypeBadge(employee.employment_type) }}

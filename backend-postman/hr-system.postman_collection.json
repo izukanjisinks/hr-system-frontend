@@ -810,8 +810,15 @@
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": { "raw": "{{baseUrl}}/api/v1/hr/dashboard/admin", "host": ["{{baseUrl}}"], "path": ["api","v1","hr","dashboard","admin"] },
-            "description": "Returns admin/HR dashboard stats including: total active employees, total departments, active payrolls, recent hires (last 5), and leave requests overview (pending/approved/rejected counts). Requires SuperAdmin or HRManager role."
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/hr/dashboard/admin",
+              "host": ["{{baseUrl}}"], "path": ["api","v1","hr","dashboard","admin"],
+              "query": [
+                { "key": "from", "value": "2025-01-01", "disabled": true, "description": "Start date filter (YYYY-MM-DD). Defaults to 12 months ago." },
+                { "key": "to", "value": "2026-03-31", "disabled": true, "description": "End date filter (YYYY-MM-DD). Defaults to today." }
+              ]
+            },
+            "description": "Returns admin/HR dashboard stats including: total active employees, total departments, active payrolls, recent hires, leave requests overview, monthly payroll cost trend, and hiring trend. Optionally filter by date range with 'from' and 'to' params. Defaults to last 12 months. Requires SuperAdmin or HRManager role."
           }
         }
       ]

@@ -16,8 +16,11 @@ export interface Employee {
   state: string
   country: string
   department_id: string
+  department_name?: string
   position_id: string
+  position_name?: string
   manager_id: string | null
+  manager_name?: string
   hire_date: string
   employment_type: string
   employment_status: string

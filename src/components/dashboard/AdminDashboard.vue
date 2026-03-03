@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { dashboardApi } from '@/services/api/dashboard'
-import type { AdminDashboardData } from '@/types/dashboard'
+import type { AdminDashboardData, HiringTrend } from '@/types/dashboard'
 import type { ChartConfig } from '@/components/ui/chart'
 import {
   Card,
@@ -13,13 +13,21 @@ import {
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   ChartContainer,
+  ChartCrosshair,
   ChartTooltip,
   ChartTooltipContent,
   componentToString,
 } from '@/components/ui/chart'
 import { Donut } from '@unovis/ts'
-import { VisDonut, VisSingleContainer } from '@unovis/vue'
+import { VisArea, VisAxis, VisDonut, VisLine, VisSingleContainer, VisXYContainer } from '@unovis/vue'
 import {
   Users,
   Building2,
@@ -30,13 +38,30 @@ const authStore = useAuthStore()
 const data = ref<AdminDashboardData | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
+const timeRange = ref('12m')
+
+function getDateRange(range: string): { from: string; to: string } {
+  const to = new Date()
+  const from = new Date()
+  switch (range) {
+    case '3m': from.setMonth(from.getMonth() - 3); break
+    case '6m': from.setMonth(from.getMonth() - 6); break
+    case '12m': from.setFullYear(from.getFullYear() - 1); break
+    default: from.setFullYear(from.getFullYear() - 1)
+  }
+  return {
+    from: from.toISOString().slice(0, 10),
+    to: to.toISOString().slice(0, 10),
+  }
+}
 
 const statCards = [
   { key: 'total_employees', title: 'Total Employees', icon: Users, description: 'Active employees' },
   { key: 'total_departments', title: 'Departments', icon: Building2, description: 'Organizational units' },
-  { key: 'active_payroll_periods', title: 'Active Payroll', icon: Wallet, description: 'Open periods' },
+  { key: 'active_payrolls', title: 'Active Payroll', icon: Wallet, description: 'Open periods' },
 ]
 
+// --- Leave Requests Donut Chart ---
 const leaveChartConfig = {
   count: { label: 'Requests' },
   pending: { label: 'Pending', color: 'var(--chart-4)' },
@@ -49,16 +74,16 @@ type LeaveChartItem = { status: string, count: number, fill: string }
 const leaveChartData = computed<LeaveChartItem[]>(() => {
   if (!data.value) return []
   return [
-    { status: 'pending', count: data.value.leave_requests_summary.pending, fill: 'var(--color-pending)' },
-    { status: 'approved', count: data.value.leave_requests_summary.approved, fill: 'var(--color-approved)' },
-    { status: 'rejected', count: data.value.leave_requests_summary.rejected, fill: 'var(--color-rejected)' },
+    { status: 'pending', count: data.value.leave_requests.pending_requests, fill: 'var(--color-pending)' },
+    { status: 'approved', count: data.value.leave_requests.approved_requests, fill: 'var(--color-approved)' },
+    { status: 'rejected', count: data.value.leave_requests.rejected_requests, fill: 'var(--color-rejected)' },
   ]
 })
 
 const totalLeaveRequests = computed(() => {
   if (!data.value) return 0
-  const s = data.value.leave_requests_summary
-  return s.pending + s.approved + s.rejected
+  const s = data.value.leave_requests
+  return s.pending_requests + s.approved_requests + s.rejected_requests
 })
 
 function getLeaveCount(d: LeaveChartItem) {
@@ -70,8 +95,50 @@ function getLeaveColor(d: LeaveChartItem) {
 }
 
 const leaveTooltipTriggers = computed(() => ({
-  [Donut.selectors.segment]: componentToString(leaveChartConfig, ChartTooltipContent, { hideLabel: true }) ?? '',
+  [Donut.selectors.segment]: (componentToString(leaveChartConfig, ChartTooltipContent, { hideLabel: true }) ?? '') as unknown as (data: any, i: number, elements: (HTMLElement | SVGElement)[]) => string | void,
 }))
+
+// --- Hiring Trend Area Chart ---
+const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+function monthToDate(month: string, year: number): Date {
+  const idx = monthNames.findIndex(m => month.trim().toLowerCase() === m.toLowerCase())
+  return new Date(year, idx >= 0 ? idx : 0, 1)
+}
+
+type ChartPoint = { date: Date, value: number }
+
+const hiringChartData = computed<ChartPoint[]>(() => {
+  if (!data.value) return []
+  return data.value.hiring_trend.map((item: HiringTrend) => ({
+    date: monthToDate(item.month, item.year),
+    value: item.new_hires,
+  }))
+})
+
+const hiringChartConfig = {
+  value: { label: 'New Hires', color: 'var(--chart-1)' },
+} satisfies ChartConfig
+
+const hiringSvgDefs = `
+  <linearGradient id="fillHiring" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="5%" stop-color="var(--color-value)" stop-opacity="0.8" />
+    <stop offset="95%" stop-color="var(--color-value)" stop-opacity="0.1" />
+  </linearGradient>
+`
+
+function getChartX(d: ChartPoint) { return d.date }
+function getChartY(d: ChartPoint) { return d.value }
+
+function formatTickMonth(d: number) {
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+}
+
+const hiringCrosshairTemplate = computed(() =>
+  componentToString(hiringChartConfig, ChartTooltipContent, {
+    labelFormatter: (d: number | Date) => new Date(d).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+  }) ?? ''
+)
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-US', {
@@ -85,7 +152,8 @@ async function fetchDashboard() {
   loading.value = true
   error.value = null
   try {
-    data.value = await dashboardApi.getAdminDashboard()
+    const params = getDateRange(timeRange.value)
+    data.value = await dashboardApi.getAdminDashboard(params)
   } catch (err) {
     console.error('Failed to load admin dashboard:', err)
     error.value = `Failed to load dashboard data: ${(err as any)?.error?.message || (err as Error)?.message || 'Unknown error'}`
@@ -93,6 +161,10 @@ async function fetchDashboard() {
     loading.value = false
   }
 }
+
+watch(timeRange, () => {
+  fetchDashboard()
+})
 
 onMounted(() => {
   fetchDashboard()
@@ -141,7 +213,7 @@ onMounted(() => {
       </Card>
     </div>
 
-    <!-- Bottom Section -->
+    <!-- Middle Section -->
     <div v-if="!loading && data" class="grid gap-4 lg:grid-cols-2">
       <!-- Leave Requests Summary - Donut Chart -->
       <Card class="flex flex-col shadow-none">
@@ -152,7 +224,7 @@ onMounted(() => {
         <CardContent class="flex-1 pb-0">
           <ChartContainer
             :config="leaveChartConfig"
-            class="mx-auto aspect-square max-h-[250px]"
+            class="mx-auto aspect-square max-h-62.5"
             :style="{
               '--vis-donut-central-label-font-size': 'var(--text-3xl)',
               '--vis-donut-central-label-font-weight': 'var(--font-weight-bold)',
@@ -176,15 +248,15 @@ onMounted(() => {
         <div class="flex justify-center gap-6 pb-6 text-sm">
           <div class="flex items-center gap-2">
             <span class="size-3 rounded-full" style="background: var(--chart-4)" />
-            <span class="text-muted-foreground">Pending ({{ data.leave_requests_summary.pending }})</span>
+            <span class="text-muted-foreground">Pending ({{ data.leave_requests.pending_requests }})</span>
           </div>
           <div class="flex items-center gap-2">
             <span class="size-3 rounded-full" style="background: var(--chart-2)" />
-            <span class="text-muted-foreground">Approved ({{ data.leave_requests_summary.approved }})</span>
+            <span class="text-muted-foreground">Approved ({{ data.leave_requests.approved_requests }})</span>
           </div>
           <div class="flex items-center gap-2">
             <span class="size-3 rounded-full" style="background: var(--chart-1)" />
-            <span class="text-muted-foreground">Rejected ({{ data.leave_requests_summary.rejected }})</span>
+            <span class="text-muted-foreground">Rejected ({{ data.leave_requests.rejected_requests }})</span>
           </div>
         </div>
       </Card>
@@ -196,16 +268,80 @@ onMounted(() => {
           <CardDescription>Newest team members</CardDescription>
         </CardHeader>
         <CardContent class="space-y-4">
-          <div v-for="hire in data.recent_hires" :key="hire.name" class="flex items-center gap-3">
+          <div v-for="hire in data.recent_hires" :key="`${hire.first_name}-${hire.last_name}`" class="flex items-center gap-3">
             <div class="size-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <span class="text-sm font-semibold text-primary">{{ hire.name.charAt(0) }}</span>
+              <span class="text-sm font-semibold text-primary">{{ hire.first_name.charAt(0) }}</span>
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium truncate">{{ hire.name }}</p>
-              <p class="text-xs text-muted-foreground truncate">{{ hire.position }} &middot; {{ hire.department }}</p>
+              <p class="text-sm font-medium truncate">{{ hire.first_name }} {{ hire.last_name }}</p>
+              <p class="text-xs text-muted-foreground truncate">{{ hire.position }}</p>
             </div>
-            <p class="text-xs text-muted-foreground shrink-0">{{ formatDate(hire.start_date) }}</p>
+            <p class="text-xs text-muted-foreground shrink-0">{{ formatDate(hire.hire_date) }}</p>
           </div>
+        </CardContent>
+      </Card>
+    </div>
+
+    <!-- Hiring Trend Chart -->
+    <div v-if="!loading && data">
+      <Card class="shadow-none pt-0">
+        <CardHeader class="flex items-center gap-2 space-y-0 border-b py-5">
+          <div class="grid flex-1 gap-1">
+            <CardTitle>Hiring Trend</CardTitle>
+            <CardDescription>New hires per month</CardDescription>
+          </div>
+          <Select v-model="timeRange">
+            <SelectTrigger class="w-40 rounded-lg" aria-label="Select time range">
+              <SelectValue placeholder="Last 12 months" />
+            </SelectTrigger>
+            <SelectContent class="rounded-xl">
+              <SelectItem value="3m" class="rounded-lg">Last 3 months</SelectItem>
+              <SelectItem value="6m" class="rounded-lg">Last 6 months</SelectItem>
+              <SelectItem value="12m" class="rounded-lg">Last 12 months</SelectItem>
+            </SelectContent>
+          </Select>
+        </CardHeader>
+        <CardContent class="px-2 pt-4 sm:px-6 sm:pt-6 pb-4">
+          <ChartContainer :config="hiringChartConfig" class="aspect-auto h-50 w-full" :cursor="false">
+            <VisXYContainer
+              :data="hiringChartData"
+              :svg-defs="hiringSvgDefs"
+              :margin="{ left: -40 }"
+            >
+              <VisArea
+                :x="getChartX"
+                :y="[getChartY]"
+                color="url(#fillHiring)"
+                :opacity="0.6"
+              />
+              <VisLine
+                :x="getChartX"
+                :y="[getChartY]"
+                :color="hiringChartConfig.value.color"
+                :line-width="1"
+              />
+              <VisAxis
+                type="x"
+                :x="getChartX"
+                :tick-line="false"
+                :domain-line="false"
+                :grid-line="false"
+                :num-ticks="5"
+                :tick-format="formatTickMonth"
+              />
+              <VisAxis
+                type="y"
+                :num-ticks="3"
+                :tick-line="false"
+                :domain-line="false"
+              />
+              <ChartTooltip />
+              <ChartCrosshair
+                :template="hiringCrosshairTemplate"
+                :color="hiringChartConfig.value.color"
+              />
+            </VisXYContainer>
+          </ChartContainer>
         </CardContent>
       </Card>
     </div>

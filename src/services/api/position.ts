@@ -6,9 +6,14 @@ export interface Position {
   code: string
   description: string
   department_id: string
+  department_name?: string
   role_id: string
   grade_level: string
   base_salary: number
+  housing_allowance: number
+  transport_allowance: number
+  medical_allowance: number
+  income_tax: number
   is_active: boolean
   created_at: string
   updated_at: string

@@ -6,7 +6,9 @@ export interface Department {
   code: string
   description: string
   parent_department_id: string | null
+  parent_department_name?: string
   manager_id: string | null
+  manager_name?: string
   is_active: boolean
   created_at: string
   updated_at: string

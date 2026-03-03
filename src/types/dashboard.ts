@@ -1,24 +1,36 @@
 export interface AdminDashboardData {
   total_employees: number
   total_departments: number
-  open_positions: number
-  pending_leave_requests: number
-  active_payroll_periods: number
+  active_payrolls: number
   recent_hires: RecentHire[]
-  leave_requests_summary: LeaveRequestsSummary
+  leave_requests: LeaveRequestsSummary
+  monthly_payroll_cost: MonthlyPayrollCost[]
+  hiring_trend: HiringTrend[]
 }
 
 export interface RecentHire {
-  name: string
+  first_name: string
+  last_name: string
   position: string
-  department: string
-  start_date: string
+  hire_date: string
 }
 
 export interface LeaveRequestsSummary {
-  pending: number
-  approved: number
-  rejected: number
+  pending_requests: number
+  approved_requests: number
+  rejected_requests: number
+}
+
+export interface MonthlyPayrollCost {
+  month: string
+  year: number
+  total_net_salary: number
+}
+
+export interface HiringTrend {
+  month: string
+  year: number
+  new_hires: number
 }
 
 export interface DashboardData {

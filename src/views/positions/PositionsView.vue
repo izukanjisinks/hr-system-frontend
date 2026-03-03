@@ -277,7 +277,7 @@ onMounted(() => {
               </div>
             </TableCell>
             <TableCell>
-              <Badge variant="outline">{{ position.department_id }}</Badge>
+              <Badge variant="outline">{{ position.department_name || position.department_id }}</Badge>
             </TableCell>
             <TableCell>
               <Badge variant="secondary">{{ position.grade_level }}</Badge>
