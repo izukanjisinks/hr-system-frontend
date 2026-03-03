@@ -196,7 +196,7 @@ const styles = {
       <!-- Header -->
       <View :style="styles.header">
         <View>
-          <Text :style="styles.companyName">Acme Corporation</Text>
+          <Text :style="styles.companyName">Hexa Prime Ltd</Text>
         </View>
         <View>
           <Text :style="styles.payslipTitle">PAYSLIP</Text>
