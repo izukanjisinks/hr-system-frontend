@@ -104,7 +104,7 @@ async function loadPeriods() {
   loading.value = true
   try {
     const response = await payrollApi.getPayrollPeriods({ page: page.value, page_size: pageSize.value })
-    periods.value = response.data
+    periods.value = response.data ?? []
     total.value = response.total
   } catch (err: any) {
     console.error('Failed to load payroll periods:', err)

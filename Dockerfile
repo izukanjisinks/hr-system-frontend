@@ -12,8 +12,6 @@ RUN npm ci
 # Copy source code and build
 COPY . .
 
-# Build arg for API URL — at build time, Vite bakes this into the bundle.
-# In production with nginx proxying, we use a relative path so the browser
 # hits the same origin and nginx forwards /api requests to the backend.
 ARG VITE_API_URL=/api/v1
 ENV VITE_API_URL=$VITE_API_URL

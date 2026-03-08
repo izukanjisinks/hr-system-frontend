@@ -38,7 +38,7 @@ async function loadTasks() {
   error.value = null
   try {
     const response = await workflowApi.getMyTasks()
-    tasks.value = response.tasks
+    tasks.value = response.tasks ?? []
   } catch (err) {
     console.error('Failed to load tasks:', err)
     error.value = 'Failed to load tasks'
