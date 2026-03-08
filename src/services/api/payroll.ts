@@ -19,7 +19,7 @@ export const payrollApi = {
   },
 
   async runPayroll(periodId: string): Promise<void> {
-    return apiClient.post(`/hr/payrolls/${periodId}/run`)
+    return apiClient.post(`/hr/payrolls/${periodId}/process`)
   },
 
   async getMyPayslips(): Promise<GetPayslipsResponse> {

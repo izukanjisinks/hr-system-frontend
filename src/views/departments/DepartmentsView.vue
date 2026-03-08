@@ -57,7 +57,7 @@ async function loadDepartments() {
   loading.value = true
   try {
     const response = await departmentApi.getDepartments({ page: page.value, page_size: pageSize.value })
-    departments.value = response.data
+    departments.value = response.data ?? []
     total.value = response.total
   } catch (err: any) {
     console.error('Failed to load departments:', err)

@@ -63,7 +63,7 @@ async function loadPositions() {
   loading.value = true
   try {
     const response = await positionApi.getPositions({ page: page.value, page_size: pageSize.value })
-    positions.value = response.data
+    positions.value = response.data ?? []
     total.value = response.total
   } catch (err: any) {
     console.error('Failed to load positions:', err)

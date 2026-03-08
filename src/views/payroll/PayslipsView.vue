@@ -46,7 +46,7 @@ async function fetchPayslips() {
   error.value = null
   try {
     const response = await payrollApi.getMyPayslips()
-    payslips.value = response.data
+    payslips.value = response.data ?? []
     if (payslips.value.length > 0) {
       selectedPayslip.value = payslips.value[0]
     }

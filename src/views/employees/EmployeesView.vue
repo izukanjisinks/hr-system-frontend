@@ -62,11 +62,11 @@ async function loadEmployees() {
   loading.value = true
   try {
     const response = await employeeApi.getEmployees({ page: page.value, page_size: pageSize.value })
-    employees.value = response.data
+    employees.value = response.data ?? []
     total.value = response.total
 
     // Build managers list from employees
-    managers.value = response.data.map((emp) => ({
+    managers.value = employees.value.map((emp) => ({
       id: emp.id,
       name: `${emp.first_name} ${emp.last_name}`,
     }))

@@ -129,7 +129,7 @@ async function fetchLeaveRequests() {
   loading.value = true
   try {
     const response = await leaveApi.getMyLeaveRequests()
-    leaveRequests.value = response.data
+    leaveRequests.value = response.data ?? []
 
     // Navigate to the month of the next upcoming leave
     const upcomingLeaves = response.data.filter((l: LeaveRequest) => new Date(l.start_date) >= new Date())
