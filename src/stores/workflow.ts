@@ -225,11 +225,11 @@ export const useWorkflowStore = defineStore('workflow', () => {
   }
 
   // Create new workflow
-  async function createWorkflow(name: string, description: string) {
+  async function createWorkflow(name: string, description: string, workflow_type: string) {
     loading.value = true
     error.value = null
     try {
-      const newWorkflow = await workflowApi.createWorkflow({ name, description })
+      const newWorkflow = await workflowApi.createWorkflow({ name, description, workflow_type })
 
       // Convert to Vue Flow format (no steps/transitions yet)
       const workflow = convertToVueFlow(newWorkflow, [], [])

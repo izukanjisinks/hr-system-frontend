@@ -2,10 +2,15 @@ import { apiClient } from './client'
 import type { LeaveRequestsResponse, LeaveType, CreateLeaveRequestPayload, LeaveRequest } from '@/types/leave'
 
 export const leaveApi = {
-  getMyLeaveRequests(page = 1, pageSize = 20): Promise<LeaveRequestsResponse> {
-    return apiClient.get<LeaveRequestsResponse>(
-      `/hr/leave-requests/me?page=${page}&page_size=${pageSize}`
-    )
+  getMyLeaveRequests(page?: number, pageSize?: number): Promise<LeaveRequestsResponse> {
+    const params = page && pageSize ? `?page=${page}&page_size=${pageSize}` : ''
+    return apiClient.get<LeaveRequestsResponse>(`/hr/leave-requests/me${params}`)
+  },
+
+  getAllLeaveRequests(params?: {
+    status?: 'pending' | 'approved' | 'rejected' | 'cancelled'
+  }): Promise<LeaveRequestsResponse> {
+    return apiClient.get<LeaveRequestsResponse>('/hr/leave-requests', { params })
   },
 
   getLeaveTypes(): Promise<LeaveType[]> {

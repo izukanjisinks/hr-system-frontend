@@ -51,20 +51,6 @@ watch([() => props.stepData, () => props.open], ([newData, isOpen]) => {
   }
 }, { immediate: true })
 
-function toggleRole(role: string, checked: boolean) {
-  if (checked) {
-    // Add role if not already present
-    if (!formData.value.allowedRoles.includes(role)) {
-      formData.value.allowedRoles.push(role)
-    }
-  } else {
-    // Remove role if present
-    const index = formData.value.allowedRoles.indexOf(role)
-    if (index > -1) {
-      formData.value.allowedRoles.splice(index, 1)
-    }
-  }
-}
 
 function handleSave() {
   emit('save', formData.value)
@@ -140,21 +126,19 @@ function handleClose() {
             Select which roles can act on this step
           </p>
           <div class="space-y-2">
-            <div
+            <label
               v-for="role in availableRoles"
               :key="role.value"
               class="flex items-center justify-between p-2 rounded-md border hover:bg-accent cursor-pointer"
-              @click="() => {
-                const isCurrentlySelected = formData.allowedRoles.includes(role.value)
-                toggleRole(role.value, !isCurrentlySelected)
-              }"
             >
               <span class="text-sm">{{ role.label }}</span>
-              <Switch
-                :checked="formData.allowedRoles.includes(role.value)"
-                @update:checked="(checked) => toggleRole(role.value, checked)"
+              <input
+                type="checkbox"
+                :value="role.value"
+                v-model="formData.allowedRoles"
+                class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
               />
-            </div>
+            </label>
           </div>
         </div>
 
@@ -173,23 +157,22 @@ function handleClose() {
         </div>
 
         <!-- Approval Settings -->
-        <div v-if="formData.allowedRoles.length > 0" class="grid gap-2 pt-2 border-t">
-          <Label>Approval Settings</Label>
+        <div v-if="formData.allowedRoles.length > 0">
+          <!-- <Label>Approval Settings</Label> -->
 
           <!-- Requires All Approvers -->
-          <div class="flex items-center justify-between p-2 rounded-md border">
+          <!-- <div class="flex items-center justify-between p-2 rounded-md border">
             <div>
               <div class="text-sm font-medium">Require All Approvers</div>
               <div class="text-xs text-muted-foreground">All selected roles must approve</div>
             </div>
             <Switch
-              :checked="formData.requiresAllApprovers"
-              @update:checked="(checked) => formData.requiresAllApprovers = checked"
+              v-model="formData.requiresAllApprovers"
             />
-          </div>
+          </div> -->
 
           <!-- Minimum Approvals -->
-          <div v-if="!formData.requiresAllApprovers" class="grid gap-2">
+          <!-- <div v-if="!formData.requiresAllApprovers" class="grid gap-2">
             <Label for="min-approvals">Minimum Approvals Required</Label>
             <input
               id="min-approvals"
@@ -202,7 +185,7 @@ function handleClose() {
             <p class="text-xs text-muted-foreground">
               Number of approvals needed (1-{{ formData.allowedRoles.length }})
             </p>
-          </div>
+          </div> -->
         </div>
       </div>
 

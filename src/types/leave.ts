@@ -23,10 +23,13 @@ export interface LeaveRequest {
   total_days: number
   reason: string
   status: 'pending' | 'approved' | 'rejected' | 'cancelled'
+  reviewed_by?: string
+  reviewed_at?: string
   review_comment: string
   attachment_url: string
   created_at: string
   updated_at: string
+  leave_type: LeaveType
 }
 
 export interface LeaveRequestsResponse {

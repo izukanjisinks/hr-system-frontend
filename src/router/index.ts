@@ -95,6 +95,23 @@ const router = createRouter({
           name: 'approvals',
           component: () => import('@/views/approvals/ApprovalsView.vue'),
         },
+        // System
+        {
+          path: 'password-policy',
+          name: 'password-policy',
+          component: () => import('@/views/system/PasswordPolicyView.vue'),
+        },
+        {
+          path: 'system-users',
+          name: 'system-users',
+          component: () => import('@/views/system/SystemUsersView.vue'),
+        },
+        // Profile
+        {
+          path: 'profile',
+          name: 'profile',
+          component: () => import('@/views/profile/ProfileView.vue'),
+        },
       ],
     },
 

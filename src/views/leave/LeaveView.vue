@@ -3,13 +3,6 @@ import { ref, onMounted } from 'vue'
 import { leaveApi } from '@/services/api/leave'
 import type { LeaveRequest, LeaveType, CreateLeaveRequestPayload } from '@/types/leave'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
   Table,
   TableBody,
   TableCell,
@@ -37,9 +30,8 @@ import {
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-vue-next'
+import { CalendarDays, Loader2, Plus } from 'lucide-vue-next'
 
 const leaveRequests = ref<LeaveRequest[]>([])
 const leaveTypes = ref<LeaveType[]>([])
@@ -219,8 +211,11 @@ onMounted(() => {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-semibold">Leave Requests</h1>
-        <p class="text-muted-foreground">View and manage your leave requests</p>
+        <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
+          <CalendarDays class="w-8 h-8 text-primary" />
+          Leave Requests
+        </h1>
+        <p class="text-muted-foreground mt-1">View and manage your leave requests</p>
       </div>
 
       <!-- New Request Dialog -->
@@ -325,26 +320,19 @@ onMounted(() => {
       {{ error }}
     </div>
 
-    <!-- Table Card -->
-    <Card>
-      <CardHeader>
-        <CardTitle>My Leave Requests</CardTitle>
-        <CardDescription v-if="!loading">
-          {{ totalItems }} total request{{ totalItems === 1 ? '' : 's' }}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <!-- Loading State -->
-        <div v-if="loading" class="space-y-3">
-          <Skeleton class="h-10 w-full" />
-          <Skeleton class="h-16 w-full" />
-          <Skeleton class="h-16 w-full" />
-          <Skeleton class="h-16 w-full" />
-        </div>
+    <!-- Request count -->
+    <div v-if="!loading" class="text-sm text-muted-foreground">
+      {{ totalItems }} request{{ totalItems === 1 ? '' : 's' }} total
+    </div>
 
-        <!-- Table -->
-        <div v-else>
-          <Table>
+    <!-- Loading State -->
+    <div v-if="loading" class="flex items-center justify-center py-12">
+      <Loader2 class="w-8 h-8 animate-spin text-muted-foreground" />
+    </div>
+
+    <!-- Table -->
+    <div v-else class="rounded-lg border px-3 py-2">
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Start Date</TableHead>
@@ -406,8 +394,6 @@ onMounted(() => {
               </Button>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+    </div>
   </div>
 </template>

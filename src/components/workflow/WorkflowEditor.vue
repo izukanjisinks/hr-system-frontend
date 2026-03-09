@@ -10,6 +10,9 @@ import TransitionEdge from './TransitionEdge.vue'
 import TransitionEditDialog from './TransitionEditDialog.vue'
 import type { Connection, Node } from '@vue-flow/core'
 import type { WorkflowState, WorkflowTransition } from '@/stores/workflow'
+import { useResultDialog } from '@/composables/useResultDialog'
+
+const { showError } = useResultDialog()
 
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
@@ -58,7 +61,7 @@ onConnect(async (connection: Connection) => {
 
   // Don't allow connections between unsaved nodes
   if (sourceIsNew || targetIsNew) {
-    alert('Please save both steps before creating a transition between them.')
+    showError('Cannot Create Transition', 'Please save both steps before creating a transition between them.')
     return
   }
 
@@ -91,7 +94,7 @@ onConnect(async (connection: Connection) => {
       console.error('Failed to create transition:', err)
       // Remove the edge if creation failed
       workflowStore.removeEdge(newEdge.id)
-      alert('Failed to create transition. Please try again.')
+      showError('Failed to Create Transition', 'Failed to create transition. Please try again.')
     }
   }
 })
@@ -180,7 +183,7 @@ async function handleTransitionSave(data: Partial<WorkflowTransition>) {
     }
   } catch (err) {
     console.error('Failed to save transition:', err)
-    alert('Failed to save transition. Please try again.')
+    showError('Failed to Save Transition', 'Failed to save transition. Please try again.')
   }
 }
 </script>

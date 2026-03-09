@@ -10,23 +10,19 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
 import { ArrowLeft, Save } from 'lucide-vue-next'
 import WorkflowEditor from '@/components/workflow/WorkflowEditor.vue'
 import NodePalette from '@/components/workflow/NodePalette.vue'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 
 const route = useRoute()
 const router = useRouter()
 const workflowStore = useWorkflowStore()
+const { confirm } = useConfirmDialog()
 
 const workflowId = computed(() => route.params.id as string)
 
 const workflow = computed(() => workflowStore.currentWorkflow)
-
-async function handleToggleActive(val: unknown) {
-  if (!workflow.value) return
-  await workflowStore.updateWorkflowStatus(workflow.value.id, val as boolean)
-}
 
 function handleSave() {
   workflowStore.saveCurrentWorkflow()
@@ -34,7 +30,13 @@ function handleSave() {
 }
 
 async function handleBack() {
-  if (confirm('Discard unsaved changes?')) {
+  const confirmed = await confirm({
+    title: 'Discard unsaved changes?',
+    description: 'Any unsaved changes to this workflow will be lost. Are you sure you want to go back?',
+    confirmText: 'Discard',
+    variant: 'destructive',
+  })
+  if (confirmed) {
     await workflowStore.setCurrentWorkflow(null)
     router.push('/workflows')
   }
@@ -60,13 +62,13 @@ onMounted(async () => {
       </div>
 
       <div class="flex items-center gap-4">
-        <div v-if="workflow" class="flex items-center gap-2">
+        <!-- <div v-if="workflow" class="flex items-center gap-2">
           <span class="text-sm text-muted-foreground">Active:</span>
           <Switch
             :checked="workflow.isActive"
             @update:checked="handleToggleActive"
           />
-        </div>
+        </div> -->
         <Button @click="handleSave">
           <Save class="size-4 mr-2" />
           Save Changes

@@ -1,6 +1,7 @@
 import { apiClient } from './client'
 import type {
   GetWorkflowsResponse,
+  GetWorkflowTypesResponse,
   BackendWorkflow,
   WorkflowStructure,
   CreateWorkflowPayload,
@@ -20,6 +21,10 @@ export const workflowApi = {
   // Workflow Management
   getAllWorkflows(): Promise<GetWorkflowsResponse> {
     return apiClient.get<GetWorkflowsResponse>('/admin/workflows')
+  },
+
+  getWorkflowTypes(): Promise<GetWorkflowTypesResponse> {
+    return apiClient.get<GetWorkflowTypesResponse>('/admin/workflow-types')
   },
 
   getWorkflowById(id: string): Promise<BackendWorkflow> {

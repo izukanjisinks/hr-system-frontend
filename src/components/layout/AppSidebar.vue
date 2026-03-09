@@ -13,12 +13,17 @@ import {
   TrendingUp,
   GitBranch,
   CheckSquare,
+  ShieldCheck,
   LogOut,
   ChevronUp,
   User2,
+  RotateCcw,
+  Mail,
+  UserCog2Icon,
 } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import hrLogo from '@/assets/logo/hr-logo-sm.jpg'
 import {
   Sidebar,
   SidebarContent,
@@ -58,39 +63,51 @@ const navGroups = [
     ],
   },
   {
-    label: 'Leave & Attendance',
+    label: 'Leave Requests & Approvals',
     items: [
       { title: 'Leave Requests', icon: CalendarDays, routeName: 'leave' },
-      { title: 'Attendance', icon: ClockAlert, routeName: 'attendance' },
-      { title: 'Holidays', icon: CalendarOff, routeName: 'holidays' },
+      { title: 'Leave Approvals', icon: CheckSquare, routeName: 'approvals' },
+      // { title: 'Attendance', icon: ClockAlert, routeName: 'attendance' },
+      // { title: 'Holidays', icon: CalendarOff, routeName: 'holidays' },
     ],
   },
   {
     label: 'Payroll',
     items: [
-      { title: 'Payroll Runs', icon: DollarSign, routeName: 'payroll' },
+       { title: 'Payroll Runs', icon: DollarSign, routeName: 'payroll' },
       { title: 'Payslips', icon: FileText, routeName: 'payslips' },
     ],
   },
+  // {
+  //   label: 'Recruitment',
+  //   items: [
+  //     { title: 'Recruitment', icon: UserSearch, routeName: 'recruitment' },
+  //   ],
+  // },
+  // {
+  //   label: 'Performance',
+  //   items: [
+  //     { title: 'Performance', icon: TrendingUp, routeName: 'performance' },
+  //   ],
+  // },
+  // {
+  //   label: 'Password Management',
+  //   items: [
+      
+  //     { title: 'Password Reset Requests', icon: RotateCcw, routeName: 'password-reset-requests' },
+  //     { title: 'Password Policy', icon: ShieldCheck, routeName: 'password-policy' },
+  //   ],
+  // },
   {
-    label: 'Recruitment',
-    items: [
-      { title: 'Recruitment', icon: UserSearch, routeName: 'recruitment' },
-    ],
-  },
-  {
-    label: 'Performance',
-    items: [
-      { title: 'Performance', icon: TrendingUp, routeName: 'performance' },
-    ],
-  },
-  {
-    label: 'System',
+    label: 'System Configuration',
     items: [
       { title: 'Workflows', icon: GitBranch, routeName: 'workflows' },
-      { title: 'Approvals', icon: CheckSquare, routeName: 'approvals' },
+      { title: 'Password Policy', icon: ShieldCheck, routeName: 'password-policy' },
+      { title: 'System Users', icon: UserCog2Icon, routeName: 'system-users' },
+      // { title: 'Smtp', icon: Mail, routeName: 'workflows' },
     ],
   },
+  
 ]
 
 async function handleLogout() {
@@ -152,6 +169,10 @@ async function handleLogout() {
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="top" class="w-(--reka-dropdown-menu-trigger-width)">
+              <DropdownMenuItem @click="router.push({ name: 'profile' })" class="cursor-pointer">
+                <User2 class="size-4" />
+                Profile
+              </DropdownMenuItem>
               <DropdownMenuItem @click="handleLogout" class="text-destructive focus:text-destructive cursor-pointer">
                 <LogOut class="size-4" />
                 Sign out

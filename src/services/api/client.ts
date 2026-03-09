@@ -88,6 +88,9 @@ export const apiClient = {
   put: <T>(path: string, body?: unknown, requiresAuth = true) =>
     request<T>('PUT', path, { body, requiresAuth }),
 
+  patch: <T>(path: string, body?: unknown, requiresAuth = true) =>
+    request<T>('PATCH', path, { body, requiresAuth }),
+
   delete: <T>(path: string, requiresAuth = true) =>
     request<T>('DELETE', path, { requiresAuth }),
 }
