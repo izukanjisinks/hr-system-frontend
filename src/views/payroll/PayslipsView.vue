@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { FileText, Download, DollarSign, Loader2 } from 'lucide-vue-next'
+import { formatCurrency } from '@/lib/utils'
 
 const payslips = ref<Payslip[]>([])
 const selectedPayslip = ref<Payslip | null>(null)
@@ -26,9 +27,6 @@ function formatPeriod(payslip: Payslip) {
   return `${monthNames[payslip.month - 1]} ${payslip.year}`
 }
 
-function formatCurrency(amount: number) {
-  return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
 
 function selectPayslip(payslip: Payslip) {
   if (payslip.id === selectedPayslip.value?.id) return

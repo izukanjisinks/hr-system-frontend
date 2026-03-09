@@ -19,7 +19,9 @@ import EmployeeDialog from '@/components/employees/EmployeeDialog.vue'
 import ResultDialog from '@/components/common/ResultDialog.vue'
 import Pagination from '@/components/common/Pagination.vue'
 import { Users, Plus, Search, Loader2, Pencil, Trash2 } from 'lucide-vue-next'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 
+const { confirm } = useConfirmDialog()
 const employees = ref<Employee[]>([])
 const loading = ref(false)
 const searchQuery = ref('')
@@ -177,7 +179,13 @@ async function handleSaveEmployee(payload: any, onError?: (error: string) => voi
 }
 
 async function handleDeleteEmployee(employee: Employee) {
-  if (!confirm(`Are you sure you want to delete ${employee.first_name} ${employee.last_name}?`)) {
+  const confirmed = await confirm({
+    title: `Delete "${employee.first_name} ${employee.last_name}"?`,
+    description: 'This employee will be permanently deleted. This action cannot be undone.',
+    confirmText: 'Delete',
+    variant: 'destructive',
+  })
+  if (!confirmed) {
     return
   }
 

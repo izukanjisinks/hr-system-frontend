@@ -25,7 +25,9 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import ResultDialog from '@/components/common/ResultDialog.vue'
 import Pagination from '@/components/common/Pagination.vue'
 import { Wallet, Search, Loader2, Play, Plus, CalendarDays } from 'lucide-vue-next'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 
+const { confirm } = useConfirmDialog()
 const periods = ref<PayrollPeriod[]>([])
 const loading = ref(false)
 const searchQuery = ref('')
@@ -148,7 +150,12 @@ async function handleCreatePayroll() {
 }
 
 async function handleRunPayroll(period: PayrollPeriod) {
-  if (!confirm(`Are you sure you want to run payroll for ${formatPeriod(period.start_date, period.end_date)}?`)) {
+  const confirmed = await confirm({
+    title: 'Run Payroll?',
+    description: `Are you sure you want to run payroll for ${formatPeriod(period.start_date, period.end_date)}?`,
+    confirmText: 'Run Payroll',
+  })
+  if (!confirmed) {
     return
   }
 

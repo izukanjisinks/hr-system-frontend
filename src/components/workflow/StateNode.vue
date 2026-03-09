@@ -4,6 +4,8 @@ import { Handle, Position } from '@vue-flow/core'
 import { useWorkflowStore } from '@/stores/workflow'
 import { Edit2, Trash2 } from 'lucide-vue-next'
 import type { WorkflowState } from '@/stores/workflow'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
+import { useResultDialog } from '@/composables/useResultDialog'
 
 // @ts-ignore - Vue SFC component
 import StepEditDialog from './StepEditDialog.vue'
@@ -14,6 +16,8 @@ const props = defineProps<{
 }>()
 
 const workflowStore = useWorkflowStore()
+const { confirm } = useConfirmDialog()
+const { showError } = useResultDialog()
 const isHovered = ref(false)
 const showEditDialog = ref(false)
 
@@ -56,12 +60,18 @@ async function handleSave(data: Partial<WorkflowState>) {
     }
   } catch (err) {
     console.error('Failed to save step:', err)
-    alert('Failed to save step. Please try again.')
+    showError('Failed to Save Step', 'Failed to save step. Please try again.')
   }
 }
 
-function handleDelete() {
-  if (confirm(`Delete state "${props.data.name}"?`)) {
+async function handleDelete() {
+  const confirmed = await confirm({
+    title: `Delete "${props.data.name}"?`,
+    description: 'This state will be removed from the workflow.',
+    confirmText: 'Delete',
+    variant: 'destructive',
+  })
+  if (confirmed) {
     workflowStore.removeNode(props.id)
   }
 }

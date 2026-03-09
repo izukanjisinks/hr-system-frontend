@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { Document, Page, View, Text } from '@ceereals/vue-pdf'
 import type { Payslip } from '@/types/payroll'
 import type { Style } from '@ceereals/vue-pdf'
+import { formatCurrency } from '@/lib/utils'
 
 const props = defineProps<{
   payslip: Payslip
@@ -28,10 +29,6 @@ const deductions = computed(() => {
 })
 
 const totalDeductions = computed(() => deductions.value.reduce((sum, d) => sum + d.amount, 0))
-
-function formatCurrency(amount: number) {
-  return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
 
 const styles = {
   page: {

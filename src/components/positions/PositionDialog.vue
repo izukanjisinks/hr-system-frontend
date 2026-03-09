@@ -18,6 +18,7 @@ import { Loader2, Briefcase, AlertCircle, Check, Calculator } from 'lucide-vue-n
 import type { Position, CreatePositionPayload, UpdatePositionPayload } from '@/services/api/position'
 import type { Role } from '@/types/role'
 import { calculateSalaryBreakdown } from '@/lib/salary'
+import { formatCurrency } from '@/lib/utils'
 
 const props = defineProps<{
   open: boolean
@@ -50,10 +51,6 @@ const dialogTitle = computed(() => isEditMode.value ? 'Edit Position' : 'Add New
 const salaryBreakdown = computed(() => {
   return calculateSalaryBreakdown(formData.value.base_salary || 0)
 })
-
-function formatCurrency(amount: number) {
-  return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
 
 // Watch for dialog open/close and position changes
 watch([() => props.open, () => props.position], ([isOpen, position]) => {
@@ -134,7 +131,7 @@ function handleClose() {
 
 <template>
   <Dialog :open="open" @update:open="(val) => emit('update:open', val)">
-    <DialogContent :key="position?.id || 'new'" class="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+    <DialogContent class="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle class="flex items-center gap-2">
           <Briefcase class="w-5 h-5" />

@@ -27,8 +27,9 @@ const props = withDefaults(defineProps<Props>(), {
   cancelText: 'Cancel',
   variant: 'default',
   loading: false,
-  icon: AlertTriangle,
 })
+
+const resolvedIcon = computed(() => props.icon ?? AlertTriangle)
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
@@ -58,7 +59,7 @@ function handleCancel() {
             :class="variant === 'destructive' ? 'bg-destructive/10' : 'bg-primary/10'"
           >
             <component
-              :is="icon"
+              :is="resolvedIcon"
               class="size-5"
               :class="variant === 'destructive' ? 'text-destructive' : 'text-primary'"
             />

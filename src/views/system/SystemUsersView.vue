@@ -36,29 +36,18 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-vue-next'
-import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import ChangeRoleDialog from '@/components/users/ChangeRoleDialog.vue'
 import { useResultDialog } from '@/composables/useResultDialog'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 
 const { showSuccess, showError } = useResultDialog()
+const { confirm } = useConfirmDialog()
 
 const users = ref<SystemUser[]>([])
 const roles = ref<Role[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 const searchQuery = ref('')
-
-// Confirmation dialog state
-const confirmDialog = ref({
-  open: false,
-  title: '',
-  description: '',
-  variant: 'default' as 'default' | 'destructive',
-  confirmText: 'Confirm',
-  icon: AlertCircle,
-  action: null as (() => Promise<void>) | null,
-  loading: false,
-})
 
 const selectedUser = ref<SystemUser | null>(null)
 const changeRoleOpen = ref(false)
@@ -116,50 +105,21 @@ function formatDate(dateString: string) {
   })
 }
 
-function openLockDialog(user: SystemUser) {
-  selectedUser.value = user
+async function openLockDialog(user: SystemUser) {
   const isLocking = !user.is_locked
-
-  confirmDialog.value = {
-    open: true,
+  const confirmed = await confirm({
     title: isLocking ? 'Lock Account' : 'Unlock Account',
     description: isLocking
       ? `Are you sure you want to lock ${user.email}? They will not be able to access the system.`
       : `Are you sure you want to unlock ${user.email}? They will regain access to the system.`,
     variant: isLocking ? 'destructive' : 'default',
     confirmText: isLocking ? 'Lock Account' : 'Unlock Account',
-    icon: isLocking ? Lock : Unlock,
-    action: async () => {
-      await handleLockToggle(user)
-    },
-    loading: false,
-  }
-}
+  })
+  if (!confirmed) return
 
-function openDeleteDialog(user: SystemUser) {
-  selectedUser.value = user
-
-  confirmDialog.value = {
-    open: true,
-    title: 'Delete User',
-    description: `Are you sure you want to delete ${user.email}? This action cannot be undone and will permanently remove all user data.`,
-    variant: 'destructive',
-    confirmText: 'Delete User',
-    icon: Trash2,
-    action: async () => {
-      await handleDelete(user)
-    },
-    loading: false,
-  }
-}
-
-async function handleLockToggle(user: SystemUser) {
-  const isLocking = !user.is_locked
-  confirmDialog.value.loading = true
   try {
     await userApi.updateUser(user.user_id, { is_locked: isLocking })
     await fetchUsers()
-    confirmDialog.value.open = false
     showSuccess(
       isLocking ? 'Account Locked' : 'Account Unlocked',
       isLocking
@@ -167,25 +127,25 @@ async function handleLockToggle(user: SystemUser) {
         : `${user.email} has been unlocked and can now access the system.`,
     )
   } catch (err: any) {
-    confirmDialog.value.open = false
     showError('Operation Failed', err?.error?.message || 'Failed to update user')
-  } finally {
-    confirmDialog.value.loading = false
   }
 }
 
-async function handleDelete(user: SystemUser) {
-  confirmDialog.value.loading = true
+async function openDeleteDialog(user: SystemUser) {
+  const confirmed = await confirm({
+    title: 'Delete User',
+    description: `Are you sure you want to delete ${user.email}? This action cannot be undone and will permanently remove all user data.`,
+    variant: 'destructive',
+    confirmText: 'Delete User',
+  })
+  if (!confirmed) return
+
   try {
     await userApi.deleteUser(user.user_id)
     await fetchUsers()
-    confirmDialog.value.open = false
     showSuccess('User Deleted', `${user.email} has been permanently removed from the system.`)
   } catch (err: any) {
-    confirmDialog.value.open = false
     showError('Delete Failed', err?.error?.message || 'Failed to delete user')
-  } finally {
-    confirmDialog.value.loading = false
   }
 }
 
@@ -207,41 +167,20 @@ async function handleChangeRole(roleId: string, onError: (error: string) => void
   }
 }
 
-function openResetPasswordDialog(user: SystemUser) {
-  selectedUser.value = user
-
-  confirmDialog.value = {
-    open: true,
+async function openResetPasswordDialog(user: SystemUser) {
+  const confirmed = await confirm({
     title: 'Reset Password',
     description: `This action will generate a new password for ${user.email} and send it to their email address. The user will be required to change their password on next login.`,
-    variant: 'default',
     confirmText: 'Reset Password',
-    icon: KeyRound,
-    action: async () => {
-      await handleResetPassword(user)
-    },
-    loading: false,
-  }
-}
+  })
+  if (!confirmed) return
 
-async function handleResetPassword(user: SystemUser) {
-  confirmDialog.value.loading = true
   try {
     await userApi.resetPassword(user.user_id)
     await fetchUsers()
-    confirmDialog.value.open = false
     showSuccess('Password Reset', `A new password has been generated and sent to ${user.email}.`)
   } catch (err: any) {
-    confirmDialog.value.open = false
     showError('Reset Failed', err?.error?.message || 'Failed to reset password')
-  } finally {
-    confirmDialog.value.loading = false
-  }
-}
-
-async function handleConfirmAction() {
-  if (confirmDialog.value.action) {
-    await confirmDialog.value.action()
   }
 }
 
@@ -403,17 +342,5 @@ onMounted(() => {
       @save="handleChangeRole"
     />
 
-    <!-- Confirmation Dialog -->
-    <ConfirmDialog
-      :open="confirmDialog.open"
-      @update:open="(val) => confirmDialog.open = val"
-      :title="confirmDialog.title"
-      :description="confirmDialog.description"
-      :variant="confirmDialog.variant"
-      :confirm-text="confirmDialog.confirmText"
-      :icon="confirmDialog.icon"
-      :loading="confirmDialog.loading"
-      @confirm="handleConfirmAction"
-    />
   </div>
 </template>

@@ -19,7 +19,10 @@ import PositionDialog from '@/components/positions/PositionDialog.vue'
 import ResultDialog from '@/components/common/ResultDialog.vue'
 import Pagination from '@/components/common/Pagination.vue'
 import { Briefcase, Plus, Search, Loader2, Pencil, Trash2 } from 'lucide-vue-next'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
+import { formatCurrency } from '@/lib/utils'
 
+const { confirm } = useConfirmDialog()
 const positions = ref<Position[]>([])
 const loading = ref(false)
 const searchQuery = ref('')
@@ -167,7 +170,13 @@ async function handleSavePosition(payload: any, onError?: (error: string) => voi
 }
 
 async function handleDeletePosition(position: Position) {
-  if (!confirm(`Are you sure you want to delete ${position.title}?`)) {
+  const confirmed = await confirm({
+    title: `Delete "${position.title}"?`,
+    description: 'This position will be permanently deleted. This action cannot be undone.',
+    confirmText: 'Delete',
+    variant: 'destructive',
+  })
+  if (!confirmed) {
     return
   }
 
@@ -191,13 +200,6 @@ async function handleDeletePosition(position: Position) {
   }
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-  }).format(amount)
-}
 
 // Watch for page changes
 watch(page, () => {

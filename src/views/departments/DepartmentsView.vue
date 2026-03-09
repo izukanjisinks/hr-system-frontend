@@ -17,7 +17,9 @@ import DepartmentDialog from '@/components/departments/DepartmentDialog.vue'
 import ResultDialog from '@/components/common/ResultDialog.vue'
 import Pagination from '@/components/common/Pagination.vue'
 import { Building2, Plus, Search, Loader2, Pencil, Trash2 } from 'lucide-vue-next'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 
+const { confirm } = useConfirmDialog()
 const departments = ref<Department[]>([])
 const loading = ref(false)
 const searchQuery = ref('')
@@ -151,7 +153,13 @@ async function handleSaveDepartment(payload: any, onError?: (error: string) => v
 }
 
 async function handleDeleteDepartment(department: Department) {
-  if (!confirm(`Are you sure you want to delete ${department.name}?`)) {
+  const confirmed = await confirm({
+    title: `Delete "${department.name}"?`,
+    description: 'This department will be permanently deleted. This action cannot be undone.',
+    confirmText: 'Delete',
+    variant: 'destructive',
+  })
+  if (!confirmed) {
     return
   }
 

@@ -28,9 +28,11 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { GitBranch, Loader2, Plus, Trash2, Eye } from 'lucide-vue-next'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 
 const router = useRouter()
 const workflowStore = useWorkflowStore()
+const { confirm } = useConfirmDialog()
 const dialogOpen = ref(false)
 const workflowTypes = ref<WorkflowType[]>([])
 
@@ -88,7 +90,13 @@ async function handleToggleActive(id: string, isActive: unknown) {
 }
 
 async function handleDelete(id: string, name: string) {
-  if (confirm(`Are you sure you want to permanently delete workflow "${name}"?\n\nThis will also delete all steps and transitions. This action cannot be undone.`)) {
+  const confirmed = await confirm({
+    title: `Delete "${name}"?`,
+    description: 'This will also delete all steps and transitions. This action cannot be undone.',
+    confirmText: 'Delete',
+    variant: 'destructive',
+  })
+  if (confirmed) {
     try {
       await workflowStore.deleteWorkflow(id)
     } catch (err) {
