@@ -41,40 +41,10 @@ async function loadPolicy() {
   error.value = null
   try {
     const data = await passwordApi.getPasswordPolicy()
+    console.log('API response:', JSON.stringify(data, null, 2))
 
-    // Log the raw response
-    console.log('=== RAW API RESPONSE ===')
-    console.log('Full response:', data)
-    console.log('Type checks:', {
-      require_uppercase: {
-        value: data.require_uppercase,
-        type: typeof data.require_uppercase,
-        isBoolean: typeof data.require_uppercase === 'boolean',
-        converted: Boolean(data.require_uppercase)
-      },
-      require_lowercase: {
-        value: data.require_lowercase,
-        type: typeof data.require_lowercase,
-        isBoolean: typeof data.require_lowercase === 'boolean',
-        converted: Boolean(data.require_lowercase)
-      },
-      require_numbers: {
-        value: data.require_numbers,
-        type: typeof data.require_numbers,
-        isBoolean: typeof data.require_numbers === 'boolean',
-        converted: Boolean(data.require_numbers)
-      },
-      require_special_chars: {
-        value: data.require_special_chars,
-        type: typeof data.require_special_chars,
-        isBoolean: typeof data.require_special_chars === 'boolean',
-        converted: Boolean(data.require_special_chars)
-      }
-    })
-
-    policy.value = data
-
-    // Populate form with current policy - ensure booleans are actual booleans
+    // Set formData BEFORE policy so the switches render with correct values
+    // (the template gates on `policy` being non-null)
     formData.value = {
       min_length: data.min_length,
       require_uppercase: Boolean(data.require_uppercase),
@@ -89,14 +59,7 @@ async function loadPolicy() {
       session_timeout_mins: data.session_timeout_mins,
     }
 
-    console.log('=== FORM DATA AFTER ASSIGNMENT ===')
-    console.log('formData.value:', formData.value)
-    console.log('Boolean checks:', {
-      require_uppercase: formData.value.require_uppercase,
-      require_lowercase: formData.value.require_lowercase,
-      require_numbers: formData.value.require_numbers,
-      require_special_chars: formData.value.require_special_chars
-    })
+    policy.value = data
   } catch (err) {
     console.error('Failed to load password policy:', err)
     error.value = 'Failed to load password policy'
@@ -184,7 +147,7 @@ onMounted(() => {
     </div>
 
     <!-- Policy Settings -->
-    <div v-else-if="policy" :key="policy.id" class="grid gap-6">
+    <div v-else-if="policy" class="grid gap-6">
       <!-- Password Complexity -->
       <div class="rounded-lg border bg-card p-6 space-y-6">
         <div>
@@ -221,9 +184,7 @@ onMounted(() => {
                 <p class="text-xs text-muted-foreground">At least one uppercase letter (A-Z)</p>
               </div>
               <Switch
-                :key="`uppercase-${policy.id}`"
-                :default-checked="formData.require_uppercase"
-                @update:checked="(val) => formData.require_uppercase = val"
+                v-model="formData.require_uppercase"
               />
             </div>
 
@@ -233,9 +194,7 @@ onMounted(() => {
                 <p class="text-xs text-muted-foreground">At least one lowercase letter (a-z)</p>
               </div>
               <Switch
-                :key="`lowercase-${policy.id}`"
-                :default-checked="formData.require_lowercase"
-                @update:checked="(val) => formData.require_lowercase = val"
+              v-model="formData.require_lowercase"
               />
             </div>
 
@@ -245,9 +204,7 @@ onMounted(() => {
                 <p class="text-xs text-muted-foreground">At least one numeric digit (0-9)</p>
               </div>
               <Switch
-                :key="`numbers-${policy.id}`"
-                :default-checked="formData.require_numbers"
-                @update:checked="(val) => formData.require_numbers = val"
+              v-model="formData.require_numbers"
               />
             </div>
 
@@ -257,9 +214,7 @@ onMounted(() => {
                 <p class="text-xs text-muted-foreground">At least one special character (!@#$%^&*)</p>
               </div>
               <Switch
-                :key="`special-${policy.id}`"
-                :default-checked="formData.require_special_chars"
-                @update:checked="(val) => formData.require_special_chars = val"
+                v-model="formData.require_special_chars"
               />
             </div>
           </div>
